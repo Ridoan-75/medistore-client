@@ -1,6 +1,6 @@
-import { Users, ShoppingBag, Package, DollarSign, TrendingUp, UserCheck } from 'lucide-react'
+import { Users, ShoppingBag, Package, DollarSign, TrendingUp, UserCheck, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import StatsCard from '@/components/admin/stats-card'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -35,113 +35,136 @@ export default function AdminDashboardPage() {
   ]
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, string> = {
-      delivered: 'bg-green-100 text-green-700 dark:bg-green-900/30',
-      shipped: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30',
-      processing: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30',
-      placed: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30',
-      cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30',
+    const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline', className: string }> = {
+      delivered: { variant: 'outline', className: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50' },
+      shipped: { variant: 'outline', className: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50' },
+      processing: { variant: 'outline', className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50' },
+      placed: { variant: 'outline', className: 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-50' },
+      cancelled: { variant: 'outline', className: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-50' },
     }
-    return variants[status] || ''
+    return variants[status] || { variant: 'outline' as const, className: '' }
+  }
+
+  const getRoleBadge = (role: string) => {
+    return role === 'Seller' 
+      ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-50'
+      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-50'
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 space-y-6 p-6 md:p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground mt-1">
+            Welcome back! Heres whats happening with your platform today.
+          </p>
+        </div>
+      </div>
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
-          <StatsCard
-            key={stat.title}
-            title={stat.title}
-            value={stat.value}
-            icon={stat.icon}
-            change={stat.change}
-            trend={stat.trend}
-          />
+          <Card key={stat.title} className="hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className="text-xs text-muted-foreground flex items-center mt-1">
+                {stat.trend === 'up' ? (
+                  <ArrowUpRight className="mr-1 h-4 w-4 text-emerald-600" />
+                ) : (
+                  <ArrowDownRight className="mr-1 h-4 w-4 text-red-600" />
+                )}
+                <span className={stat.trend === 'up' ? 'text-emerald-600' : 'text-red-600'}>
+                  {Math.abs(stat.change)}%
+                </span>
+                <span className="ml-1">from last month</span>
+              </p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {/* Tables Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid gap-4 lg:grid-cols-7">
         
-        {/* Recent Users */}
-        <Card>
+        {/* Recent Orders - Takes more space */}
+        <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle>Recent Users</CardTitle>
+            <CardTitle>Recent Orders</CardTitle>
+            <CardDescription>
+              You have {recentOrders.length} recent orders from this week.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>Order</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-8 h-8">
-                          <AvatarFallback className="bg-emerald-100 text-emerald-600 text-xs">
-                            {user.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-sm">{user.name}</p>
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                {recentOrders.map((order) => {
+                  const statusConfig = getStatusBadge(order.status)
+                  return (
+                    <TableRow key={order.id}>
+                      <TableCell>
+                        <div className="font-medium">{order.id}</div>
+                        <div className="text-sm text-muted-foreground mt-0.5">
+                          {order.customer}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{user.role}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {user.date}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={statusConfig.variant} className={statusConfig.className}>
+                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        ৳{order.total.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
-        {/* Recent Orders */}
-        <Card>
+        {/* Recent Users */}
+        <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
+            <CardTitle>Recent Users</CardTitle>
+            <CardDescription>
+              {recentUsers.length} new users joined this week.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-sm">{order.id}</p>
-                        <p className="text-xs text-muted-foreground">{order.customer}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      ৳{order.total}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusBadge(order.status)}>
-                        {order.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="space-y-4">
+              {recentUsers.map((user) => (
+                <div key={user.id} className="flex items-center">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white text-xs font-medium">
+                      {user.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="ml-3 flex-1 space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                  <Badge variant="outline" className={getRoleBadge(user.role)}>
+                    {user.role}
+                  </Badge>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>

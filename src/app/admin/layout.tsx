@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import * as React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { 
   LayoutDashboard, 
@@ -9,198 +10,195 @@ import {
   ShoppingBag, 
   FolderTree,
   LogOut,
-  Menu,
-  X,
-  ChevronRight
+  User,
+  ChevronDown,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { 
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarGroup,
+  SidebarGroupContent,
+} from '@/components/ui/sidebar'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Separator } from '@/components/ui/separator'
 
-export default function AdminLayout({
-  children,
-}: {
+interface AdminLayoutProps {
   children: React.ReactNode
-}) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const pathname = usePathname()
+}
 
-  const navigation = [
-    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
-    { name: 'Categories', href: '/admin/categories', icon: FolderTree },
-  ]
+// Navigation items - shudhu Dashboard, Users, Orders, Categories
+const navigationItems = [
+  { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { title: 'Users', href: '/admin/users', icon: Users },
+  { title: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+  { title: 'Categories', href: '/admin/categories', icon: FolderTree },
+]
+
+// Admin user data
+const adminUser = {
+  name: 'Admin User',
+  email: 'admin@medistore.com',
+  avatar: 'AD',
+}
+
+// AppSidebar Component
+function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname()
 
   const isActive = (path: string) => pathname === path
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-white dark:bg-gray-800 border-r overflow-y-auto">
-          {/* Logo */}
-          <div className="flex items-center h-16 flex-shrink-0 px-4 border-b">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-xl">💊</span>
-              </div>
-              <span className="text-xl font-bold">MediStore</span>
-            </Link>
-          </div>
+    <Sidebar collapsible="offcanvas" className="border-r" {...props}>
+      <SidebarHeader className="border-b px-3 py-3">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild size="lg" className="hover:bg-sidebar-accent">
+              <Link href="/" className="flex items-center gap-3">
+                <div className="flex aspect-square size-6 items-center justify-center rounded-md overflow-hidden">
+                  <Image 
+                    src="/logo.png" 
+                    alt="MediStore Logo" 
+                    width={24} 
+                    height={24}
+                    className="object-contain"
+                  />
+                </div>
+                <span className="font-semibold text-sm">MediStore</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-          {/* Navigation */}
-          <nav className="flex-1 px-3 py-4 space-y-1">
-            {navigation.map((item) => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`
-                    flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                    ${isActive(item.href)
-                      ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400'
-                      : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
-                    }
-                  `}
-                >
-                  <Icon className="w-5 h-5" />
-                  {item.name}
-                </Link>
-              )
-            })}
-          </nav>
-
-          {/* Logout Button */}
-          <div className="p-3 border-t">
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              <LogOut className="w-5 h-5 mr-3" />
-              Logout
-            </Button>
-          </div>
+      <SidebarContent className="px-2">
+        {/* Quick Create Button with Logo */}
+        <div className="px-2 py-3">
+          <SidebarMenuButton 
+            className="w-full justify-start gap-3 bg-sidebar-accent hover:bg-sidebar-accent/80 border border-sidebar-border h-10"
+          >
+            <div className="flex aspect-square size-5 items-center justify-center rounded overflow-hidden bg-background">
+              <Image 
+                src="/logo.png" 
+                alt="Quick Create" 
+                width={20} 
+                height={20}
+                className="object-contain"
+              />
+            </div>
+            <span className="text-sm font-medium">Quick Create</span>
+          </SidebarMenuButton>
         </div>
-      </aside>
 
-      {/* Main Content */}
-      <div className="lg:pl-64">
-        {/* Top Bar */}
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-white dark:bg-gray-800 px-4 lg:px-6">
-          {/* Mobile Menu Button */}
-          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            
-            <SheetContent side="left" className="w-64 p-0">
-              <div className="flex flex-col h-full bg-white dark:bg-gray-800">
-                {/* Mobile Logo */}
-                <div className="flex items-center h-16 px-4 border-b">
-                  <Link href="/" className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                      <span className="text-xl">💊</span>
-                    </div>
-                    <span className="text-xl font-bold">MediStore</span>
-                  </Link>
-                </div>
+        {/* Main Navigation - Dashboard, Users, Orders, Categories */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationItems.map((item) => {
+                const Icon = item.icon
+                const active = isActive(item.href)
 
-                {/* Mobile Navigation */}
-                <nav className="flex-1 px-3 py-4 space-y-1">
-                  {navigation.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`
-                          flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium
-                          ${isActive(item.href)
-                            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/50'
-                            : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
-                          }
-                        `}
-                      >
-                        <Icon className="w-5 h-5" />
-                        {item.name}
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild 
+                      isActive={active}
+                      className="hover:bg-sidebar-accent"
+                    >
+                      <Link href={item.href} className="flex items-center gap-3">
+                        <Icon className="size-4" />
+                        <span className="text-sm">{item.title}</span>
                       </Link>
-                    )
-                  })}
-                </nav>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
-                {/* Mobile Logout */}
-                <div className="p-3 border-t">
-                  <Button variant="ghost" className="w-full justify-start text-red-600">
-                    <LogOut className="w-5 h-5 mr-3" />
-                    Logout
-                  </Button>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-
-          {/* Page Title */}
-          <div className="flex-1">
-            <h1 className="text-lg font-semibold">
-              {navigation.find(item => isActive(item.href))?.name || 'Admin Panel'}
-            </h1>
-          </div>
-
-          {/* User Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar>
-                  <AvatarFallback className="bg-emerald-600 text-white">
-                    AD
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">Admin User</p>
-                  <p className="text-xs text-muted-foreground">admin@medistore.com</p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Link href="/admin/profile" className="flex items-center w-full">
+      <SidebarFooter className="border-t px-2 py-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton 
+                  size="lg" 
+                  className="hover:bg-sidebar-accent"
+                >
+                  <Avatar className="h-7 w-7 rounded-md">
+                    <AvatarFallback className="bg-foreground text-background text-xs font-medium rounded-md">
+                      {adminUser.avatar}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col gap-0.5 leading-none text-left flex-1">
+                    <span className="text-sm font-medium">{adminUser.name}</span>
+                    <span className="text-xs text-muted-foreground">{adminUser.email}</span>
+                  </div>
+                  <ChevronDown className="size-4 ml-auto opacity-50" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="start" className="w-56">
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
                   Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href="/admin/settings" className="flex items-center w-full">
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </header>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  )
+}
 
-        {/* Page Content */}
-        <main className="p-4 lg:p-6">
+// SiteHeader Component
+function SiteHeader() {
+  const pathname = usePathname()
+  const currentPage = navigationItems.find(item => pathname === item.href)
+
+  return (
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 bg-background">
+      <SidebarTrigger className="-ml-1" />
+      <Separator orientation="vertical" className="mr-2 h-4" />
+      <h1 className="text-sm font-semibold">
+        {currentPage?.title || 'Dashboard'}
+      </h1>
+    </header>
+  )
+}
+
+// Main Layout Component
+export default function AdminLayout({ children }: AdminLayoutProps) {
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <SiteHeader />
+        <main className="flex flex-1 flex-col p-4 bg-muted/40">
           {children}
         </main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
