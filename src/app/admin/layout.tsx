@@ -71,14 +71,13 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <Link href="/" className="flex items-center gap-3">
                 <div className="flex aspect-square size-6 items-center justify-center rounded-md overflow-hidden">
                   <Image 
-                    src="/logo.png" 
+                    src="/images/Logo.png" 
                     alt="MediStore Logo" 
-                    width={24} 
-                    height={24}
+                    width={50} 
+                    height={50}
                     className="object-contain"
                   />
                 </div>
-                <span className="font-semibold text-sm">MediStore</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -100,7 +99,7 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="object-contain"
               />
             </div>
-            <span className="text-sm font-medium">Quick Create</span>
+            <span className="text-sm font-medium">Medico</span>
           </SidebarMenuButton>
         </div>
 
