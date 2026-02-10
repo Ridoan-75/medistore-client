@@ -5,9 +5,10 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 seconds
 })
 
-// Request interceptor - Add token to all requests
+// Request Interceptor - Add token to every request
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -21,15 +22,22 @@ api.interceptors.request.use(
   }
 )
 
-// Response interceptor - Handle errors globally
+// Response Interceptor - Handle errors globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Handle 401 - Unauthorized (token expired)
     if (error.response?.status === 401) {
-      // Token expired or invalid
       localStorage.removeItem('token')
+      localStorage.removeItem('user')
       window.location.href = '/login'
     }
+    
+    // Handle network errors
+    if (!error.response) {
+      console.error('Network error:', error)
+    }
+    
     return Promise.reject(error)
   }
 )
