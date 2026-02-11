@@ -1,69 +1,147 @@
-import api from '@/lib/api'
+import { env } from "./../env";
+import { cookies } from "next/headers";
+
+export interface CreateOrderItemPayload {
+  medicineId: string;
+  quantity: number;
+}
+
+export interface CreateOrderPayload {
+  phone: string;
+  shippingAddress: string;
+  orderItems: CreateOrderItemPayload[];
+}
+
+export interface Medicine {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+}
 
 export interface OrderItem {
-  medicineId: string
-  quantity: number
-  price: number
+  id: string;
+  orderId: string;
+  medicineId: string;
+  sellerId: string;
+  quantity: number;
+  price: string;
+  createdAt: string;
+  updatedAt: string;
+  medicine: Medicine;
 }
 
-export interface CreateOrderData {
-  items: OrderItem[]
-  shippingAddress: {
-    fullName: string
-    phone: string
-    address: string
-    city: string
-    postalCode: string
-  }
-  paymentMethod: string
+export interface Order {
+  id: string;
+  userId: string;
+  phone: string;
+  shippingAddress: string;
+  status: "PLACED" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  totalAmount: string;
+  createdAt: string;
+  updatedAt: string;
+  orderItems: OrderItem[];
 }
+
+const API_URL = env.API_URL;
 
 export const orderService = {
-  // Create order (Customer)
-  create: async (data: CreateOrderData) => {
-    const response = await api.post('/orders', data)
-    return response.data
+  createOrder: async (payload: CreateOrderPayload) => {
+    try {
+      const cookieStore = await cookies();
+      const res = await fetch(`${API_URL}/order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          cookie: cookieStore.toString(),
+        },
+
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        return {
+          data: null,
+          error: { message: error.message || "Failed to create order" },
+        };
+      }
+
+      const response = await res.json();
+      console.log(response);
+      return {
+        data: response.data as Order,
+        error: null,
+      };
+    } catch (error) {
+      console.error("Order creation error:", error);
+      return {
+        data: null,
+        error: { message: "Failed to create order" },
+      };
+    }
   },
 
-  // Get customer's orders
-  getMyOrders: async () => {
-    const response = await api.get('/orders/my-orders')
-    return response.data
+  getUserOrders: async () => {
+    try {
+      const cookieStore = await cookies();
+      const res = await fetch(`${API_URL}/order`, {
+        method: "GET",
+        headers: {
+          cookie: cookieStore.toString(),
+        },
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        return {
+          data: null,
+          error: { message: "Failed to fetch orders" },
+        };
+      }
+
+      const response = await res.json();
+      return {
+        data: response.data,
+        error: null,
+      };
+    } catch (error) {
+      console.error("Fetch orders error:", error);
+      return {
+        data: null,
+        error: { message: "Failed to fetch orders" },
+      };
+    }
   },
 
-  // Get single order
-  getById: async (id: string) => {
-    const response = await api.get(`/orders/${id}`)
-    return response.data
-  },
+  trackOrderStatus: async (orderId: string) => {
+    try {
+      const cookieStore = await cookies();
+      const res = await fetch(`${API_URL}/order/${orderId}/status`, {
+        method: "GET",
+        headers: {
+          cookie: cookieStore.toString(),
+        },
+        cache: "no-store",
+      });
 
-  // Get all orders (Admin)
-  getAll: async (params?: { status?: string }) => {
-    const response = await api.get('/orders', { params })
-    return response.data
-  },
+      if (!res.ok) {
+        return {
+          data: null,
+          error: { message: "Failed to fetch order status" },
+        };
+      }
 
-  // Get seller's orders
-  getSellerOrders: async () => {
-    const response = await api.get('/orders/seller-orders')
-    return response.data
+      const response = await res.json();
+      return {
+        data: response.data as { status: Order["status"] },
+        error: null,
+      };
+    } catch (error) {
+      console.error("Fetch order status error:", error);
+      return {
+        data: null,
+        error: { message: "Failed to fetch order status" },
+      };
+    }
   },
-
-  // Update order status (Seller/Admin)
-  updateStatus: async (id: string, status: string) => {
-    const response = await api.patch(`/orders/${id}/status`, { status })
-    return response.data
-  },
-
-  // Add review (Customer)
-  addReview: async (orderId: string, medicineId: string, data: {
-    rating: number
-    comment: string
-  }) => {
-    const response = await api.post(`/orders/${orderId}/review`, {
-      medicineId,
-      ...data,
-    })
-    return response.data
-  },
-}
+};

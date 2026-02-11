@@ -1,148 +1,290 @@
-import Link from 'next/link'
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import Link from "next/link";
+import {
+  Facebook,
+  Twitter,
+  Instagram,
+  Youtube,
+  Mail,
+  Phone,
+  MapPin,
+  Send,
+  Heart,
+  ShieldCheck,
+  Truck,
+  CreditCard,
+  Clock,
+  ArrowRight,
+  LucideIcon,
+} from "lucide-react";
+import { Input } from "@/src/components/ui/input";
+import { Button } from "@/src/components/ui/button";
 
-export default function Footer() {
+interface SocialLink {
+  icon: LucideIcon;
+  href: string;
+  label: string;
+}
+
+interface QuickLink {
+  label: string;
+  href: string;
+}
+
+interface ContactInfo {
+  icon: LucideIcon;
+  text: string;
+  href?: string;
+}
+
+interface TrustBadge {
+  icon: LucideIcon;
+  text: string;
+}
+
+const SOCIAL_LINKS: SocialLink[] = [
+  { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
+  { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
+  { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
+  { icon: Youtube, href: "https://youtube.com", label: "YouTube" },
+];
+
+const QUICK_LINKS: QuickLink[] = [
+  { label: "About Us", href: "/about" },
+  { label: "Shop", href: "/shop" },
+  { label: "Contact", href: "/contact" },
+  { label: "Blog", href: "/blog" },
+  { label: "FAQs", href: "/faq" },
+];
+
+const CUSTOMER_LINKS: QuickLink[] = [
+  { label: "My Account", href: "/account" },
+  { label: "Track Order", href: "/orders/track" },
+  { label: "My Orders", href: "/orders" },
+  { label: "Wishlist", href: "/wishlist" },
+  { label: "Returns", href: "/returns" },
+];
+
+const CONTACT_INFO: ContactInfo[] = [
+  {
+    icon: MapPin,
+    text: "Merul Badda, Dhaka, Bangladesh",
+  },
+  {
+    icon: Phone,
+    text: "(+880) 123-4567",
+    href: "tel:+880123456789",
+  },
+  {
+    icon: Mail,
+    text: "support@medistore.com",
+    href: "mailto:support@medistore.com",
+  },
+  {
+    icon: Clock,
+    text: "Mon - Sat: 8AM - 10PM",
+  },
+];
+
+const TRUST_BADGES: TrustBadge[] = [
+  { icon: ShieldCheck, text: "Secure Payment" },
+  { icon: Truck, text: "Fast Delivery" },
+  { icon: CreditCard, text: "Easy Returns" },
+];
+
+const CURRENT_YEAR = new Date().getFullYear();
+
+export function Footer() {
   return (
-    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
-      {/* Main Footer Content */}
+    <footer className="bg-foreground text-background relative overflow-hidden">
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[150px] -z-10" />
+
+      <div className="border-b border-background/10">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+            {TRUST_BADGES.map((badge) => {
+              const Icon = badge.icon;
+              return (
+                <div key={badge.text} className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <span className="font-semibold text-background/90">
+                    {badge.text}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
-          
-          {/* Column 1: Brand & Description */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="text-3xl">💊</span>
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
+          <div className="lg:col-span-2">
+            <Link href="/" className="flex items-center gap-3 mb-6 group">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 group-hover:scale-105 transition-transform">
+                <ShieldCheck className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-2xl font-bold text-background group-hover:text-primary transition-colors">
                 MediStore
-              </h3>
-            </div>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Your trusted online pharmacy delivering quality healthcare products with care, convenience, and commitment to your well-being.
+              </span>
+            </Link>
+
+            <p className="text-background/70 mb-6 leading-relaxed max-w-sm">
+              Your trusted online pharmacy for quality medical supplies,
+              healthcare products, and wellness essentials. FDA approved
+              products with nationwide delivery.
             </p>
-            
-            {/* Newsletter */}
-            <div className="pt-2">
-              <p className="text-sm font-semibold mb-2 text-gray-300">Subscribe to our newsletter</p>
+
+            <div className="flex items-center gap-3 mb-6">
+              {SOCIAL_LINKS.map((social) => {
+                const Icon = social.icon;
+                return (
+                  <Link
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 bg-background/10 rounded-xl flex items-center justify-center hover:bg-primary hover:scale-110 transition-all"
+                    aria-label={social.label}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="bg-background/5 rounded-2xl p-5 border border-background/10">
+              <h4 className="font-semibold text-background mb-3 flex items-center gap-2">
+                <Send className="h-4 w-4 text-primary" />
+                Subscribe to Newsletter
+              </h4>
+              <p className="text-background/60 text-sm mb-4">
+                Get health tips and exclusive offers directly in your inbox.
+              </p>
               <div className="flex gap-2">
-                <Input 
-                  placeholder="Your email" 
-                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-emerald-500"
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="bg-background/10 border-background/20 text-background placeholder:text-background/50 h-11 rounded-xl"
                 />
-                <Button className="bg-emerald-600 hover:bg-emerald-700 px-4">
-                  <Mail className="w-4 h-4" />
+                <Button className="bg-gradient-to-r from-primary to-blue-600 hover:opacity-90 text-white h-11 px-5 rounded-xl shadow-lg shadow-primary/25">
+                  <ArrowRight className="h-5 w-5" />
                 </Button>
               </div>
             </div>
           </div>
 
-          {/* Column 2: Quick Links */}
           <div>
-            <h3 className="text-lg font-bold mb-4 text-white">Quick Links</h3>
+            <h3 className="text-lg font-bold text-background mb-5 flex items-center gap-2">
+              <span className="w-8 h-0.5 bg-primary rounded-full" />
+              Quick Links
+            </h3>
             <ul className="space-y-3">
-              {[
-                { name: 'Home', href: '/' },
-                { name: 'Shop Medicines', href: '/shop' },
-                { name: 'About Us', href: '/about' },
-                { name: 'Blog', href: '/blog' },
-                { name: 'Contact', href: '/contact' }
-              ].map((link) => (
-                <li key={link.name}>
-                  <Link 
-                    href={link.href} 
-                    className="text-gray-400 hover:text-emerald-400 transition-colors duration-200 text-sm flex items-center gap-2 group"
+              {QUICK_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-background/70 hover:text-primary hover:pl-2 transition-all inline-flex items-center gap-2 group"
                   >
-                    <span className="w-0 h-0.5 bg-emerald-400 group-hover:w-4 transition-all duration-200"></span>
-                    {link.name}
+                    <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Column 3: Support */}
           <div>
-            <h3 className="text-lg font-bold mb-4 text-white">Customer Support</h3>
+            <h3 className="text-lg font-bold text-background mb-5 flex items-center gap-2">
+              <span className="w-8 h-0.5 bg-primary rounded-full" />
+              Customer
+            </h3>
             <ul className="space-y-3">
-              {[
-                { name: 'Track Order', href: '/track' },
-                { name: 'Shipping Info', href: '/shipping' },
-                { name: 'Returns', href: '/returns' },
-                { name: 'FAQs', href: '/faq' },
-                { name: 'Privacy Policy', href: '/privacy' }
-              ].map((link) => (
-                <li key={link.name}>
-                  <Link 
-                    href={link.href} 
-                    className="text-gray-400 hover:text-emerald-400 transition-colors duration-200 text-sm flex items-center gap-2 group"
+              {CUSTOMER_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-background/70 hover:text-primary hover:pl-2 transition-all inline-flex items-center gap-2 group"
                   >
-                    <span className="w-0 h-0.5 bg-emerald-400 group-hover:w-4 transition-all duration-200"></span>
-                    {link.name}
+                    <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Column 4: Contact Info */}
           <div>
-            <h3 className="text-lg font-bold mb-4 text-white">Get In Touch</h3>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 text-sm">
-                <MapPin className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-gray-400">
-                  123 Medical Plaza, Dhaka 1200, Bangladesh
-                </p>
-              </div>
-              
-              <div className="flex items-center gap-3 text-sm">
-                <Phone className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                <a href="tel:+8801234567890" className="text-gray-400 hover:text-emerald-400 transition-colors">
-                  +880 1234-567890
-                </a>
-              </div>
-              
-              <div className="flex items-center gap-3 text-sm">
-                <Mail className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                <a href="mailto:info@medistore.com" className="text-gray-400 hover:text-emerald-400 transition-colors">
-                  info@medistore.com
-                </a>
-              </div>
+            <h3 className="text-lg font-bold text-background mb-5 flex items-center gap-2">
+              <span className="w-8 h-0.5 bg-primary rounded-full" />
+              Contact Us
+            </h3>
+            <ul className="space-y-4">
+              {CONTACT_INFO.map((info, index) => {
+                const Icon = info.icon;
+                const content = (
+                  <div className="flex items-start gap-3 group">
+                    <div className="w-9 h-9 bg-background/10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                      <Icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-background/70 text-sm group-hover:text-background transition-colors">
+                      {info.text}
+                    </span>
+                  </div>
+                );
 
-              {/* Social Media */}
-              <div className="pt-2">
-                <p className="text-sm font-semibold mb-3 text-gray-300">Follow Us</p>
-                <div className="flex gap-3">
-                  {[
-                    { icon: Facebook, href: '#', color: 'hover:bg-blue-600' },
-                    { icon: Twitter, href: '#', color: 'hover:bg-sky-500' },
-                    { icon: Instagram, href: '#', color: 'hover:bg-pink-600' },
-                    { icon: Linkedin, href: '#', color: 'hover:bg-blue-700' }
-                  ].map((social, index) => (
-                    <Link
-                      key={index}
-                      href={social.href}
-                      className={`bg-gray-800 p-2.5 rounded-lg ${social.color} transition-all duration-300 hover:scale-110 hover:shadow-lg group`}
-                    >
-                      <social.icon className="w-5 h-5" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
+                return (
+                  <li key={index}>
+                    {info.href ? (
+                      <Link href={info.href} className="block">
+                        {content}
+                      </Link>
+                    ) : (
+                      content
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-background/10">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-background/60 text-sm flex items-center gap-1">
+              © {CURRENT_YEAR} MediStore. Made with{" "}
+              <Heart className="h-4 w-4 text-red-500 fill-red-500" /> in
+              Bangladesh
+            </p>
+
+            <div className="flex items-center gap-6 text-sm">
+              <Link
+                href="/privacy"
+                className="text-background/60 hover:text-primary transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <span className="w-1 h-1 rounded-full bg-background/30" />
+              <Link
+                href="/terms"
+                className="text-background/60 hover:text-primary transition-colors"
+              >
+                Terms of Service
+              </Link>
+              <span className="w-1 h-1 rounded-full bg-background/30" />
+              <Link
+                href="/returns"
+                className="text-background/60 hover:text-primary transition-colors"
+              >
+                Return Policy
+              </Link>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Bottom Copyright - Center */}
-      <div className="border-t border-gray-800">
-        <div className="container mx-auto px-4 py-6">
-          <p className="text-center text-sm text-gray-400">
-            © 2026 MediStore. All rights reserved.
-          </p>
-        </div>
-      </div>
     </footer>
-  )
+  );
 }

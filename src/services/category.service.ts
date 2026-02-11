@@ -1,35 +1,48 @@
-import api from '@/lib/api'
+import { cookies } from "next/headers";
+import { env } from "./../env";
+const API_URL = env.API_URL;
 
 export interface Category {
-  id: string
-  name: string
-  description: string
-  icon?: string
-  medicineCount?: number
+  id: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export const categoryService = {
-  // Get all categories
-  getAll: async () => {
-    const response = await api.get('/categories')
-    return response.data
-  },
+  getAllCategories: async () => {
+    try {
+      const cookieStore = await cookies();
+      const res = await fetch(`${API_URL}/category`, {
+        // next: { tags: ["categories"] },
+        headers: {
+          cookie: cookieStore.toString(),
+        },
+        cache: "no-store",
+      });
 
-  // Create category (Admin)
-  create: async (data: { name: string; description: string; icon?: string }) => {
-    const response = await api.post('/categories', data)
-    return response.data
-  },
+      if (!res.ok) {
+        return {
+          data: null,
+          error: { message: "Failed to fetch categories" },
+        };
+      }
 
-  // Update category (Admin)
-  update: async (id: string, data: Partial<Category>) => {
-    const response = await api.put(`/categories/${id}`, data)
-    return response.data
-  },
+      const response = await res.json();
+      const categories: Category[] = response?.data || [];
 
-  // Delete category (Admin)
-  delete: async (id: string) => {
-    const response = await api.delete(`/categories/${id}`)
-    return response.data
+      return {
+        data: categories,
+        error: null,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        data: null,
+        error: { message: "Failed to fetch categories" },
+      };
+    }
   },
-}
+};

@@ -1,30 +1,28 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import Navbar from '@/components/layout/navbar'
-import Footer from '@/components/layout/footer'
-
-const inter = Inter({ subsets: ['latin'] })
+import React from "react";
+import type { Metadata } from "next";
+import "./globals.css";
+import { StoreProvider } from "@/src/store/StoreProvider";
+import { Toaster } from "@/src/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'MediStore - Your Trusted Online Medicine Shop',
-  description: 'Buy quality medicines online',
-}
+  title: "MediStore  - Your Trusted Online Medicine Shop",
+  description:
+    "Quality medical supplies, healthcare products, and pharmacy services for your well-being",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <Navbar />
-        <main className="min-h-screen">
+      <body className="font-sans antialiased bg-background text-foreground">
+        <StoreProvider>
           {children}
-        </main>
-        <Footer />
+          <Toaster  />
+        </StoreProvider>
       </body>
     </html>
-  )
+  );
 }
