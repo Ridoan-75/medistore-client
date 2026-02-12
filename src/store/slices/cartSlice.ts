@@ -81,22 +81,23 @@ export const {
   clearCart,
 } = cartSlice.actions;
 
-// Selectors
-export const selectCartItems = (state: { cart: CartState }) => state.cart.items;
+// Updated Selectors with optional cart state for redux-persist
+export const selectCartItems = (state: { cart?: CartState }) => 
+  state.cart?.items ?? [];
 
-export const selectCartTotalQuantity = (state: { cart: CartState }) =>
-  state.cart.items.reduce((total, item) => total + item.quantity, 0);
+export const selectCartTotalQuantity = (state: { cart?: CartState }) =>
+  state.cart?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
 
-export const selectCartSubtotal = (state: { cart: CartState }) =>
-  state.cart.items.reduce(
+export const selectCartSubtotal = (state: { cart?: CartState }) =>
+  state.cart?.items.reduce(
     (total, item) => total + item.price * item.quantity,
     0
-  );
+  ) ?? 0;
 
-export const selectCartItemById = (id: string) => (state: { cart: CartState }) =>
-  state.cart.items.find((item) => item.id === id);
+export const selectCartItemById = (id: string) => (state: { cart?: CartState }) =>
+  state.cart?.items.find((item) => item.id === id);
 
-export const selectIsInCart = (id: string) => (state: { cart: CartState }) =>
-  state.cart.items.some((item) => item.id === id);
+export const selectIsInCart = (id: string) => (state: { cart?: CartState }) =>
+  state.cart?.items.some((item) => item.id === id) ?? false;
 
 export default cartSlice.reducer;
