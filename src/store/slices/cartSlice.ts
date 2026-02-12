@@ -1,6 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { CartItem, CartState } from "@/src/types/cart.types";
 
+// Re-export CartItem so other files can import from cartSlice
+export type { CartItem } from "@/src/types/cart.types";
+
 const initialState: CartState = {
   items: [],
 };
