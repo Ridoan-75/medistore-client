@@ -130,8 +130,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   }
 
   const reviews = reviewsResult.data || [];
-  const isLoggedIn = !!sessionResult.data;
-  const userId = sessionResult.data?.user?.id;
+  const session = sessionResult.data;
+  const isLoggedIn = !!(session?.user?.id); // ✅ FIXED
+  const userId = session?.user?.id;
   const userReview = reviews.find((r) => r.user?.id === userId) || null;
   const averageRating = calculateAverageRating(reviews);
   const stockBadge = getStockBadgeConfig(product.status as ProductStatus, product.stock);

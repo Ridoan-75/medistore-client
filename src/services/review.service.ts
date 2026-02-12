@@ -29,17 +29,37 @@ export const reviewService = {
   createReview: async (payload: CreateReviewPayload) => {
     try {
       const cookieStore = await cookies();
+      const cookieString = cookieStore.toString();
+      
+      // ✅ Check if cookies exist
+      if (!cookieString) {
+        return {
+          data: null,
+          error: { message: "Please login to submit a review" },
+        };
+      }
+
       const res = await fetch(`${API_URL}/review`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          cookie: cookieStore.toString(),
+          cookie: cookieString,
         },
+        credentials: "include", // ✅ Important for session cookies
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         const error = await res.json();
+        
+        // ✅ Handle specific authentication errors
+        if (res.status === 401 || res.status === 403) {
+          return {
+            data: null,
+            error: { message: "Please login to submit a review" },
+          };
+        }
+        
         return {
           data: null,
           error: { message: error.message || "Failed to create review" },
@@ -55,7 +75,7 @@ export const reviewService = {
       console.error("Review creation error:", error);
       return {
         data: null,
-        error: { message: "Failed to create review" },
+        error: { message: "Failed to create review. Please try again." },
       };
     }
   },

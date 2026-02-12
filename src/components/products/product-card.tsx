@@ -19,7 +19,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { useAppDispatch } from "@/src/store/hooks";
 import { addToCart } from "@/src/store/slices/cartSlice";
 import { useToast } from "@/src/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export interface Product {
   id: string;
@@ -75,6 +75,35 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const isNew = isNewProduct(product.createdAt);
   const isAvailable = product.status === "AVAILABLE" && product.stock > 0;
 
+  // ✅ Check if product is in wishlist on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+        const exists = wishlist.some((item: any) => item.id === product.id);
+        setIsWishlisted(exists);
+      } catch (error) {
+        console.error("Error loading wishlist:", error);
+      }
+    }
+  }, [product.id]);
+
+  // ✅ Listen for storage changes from other tabs/components
+  useEffect(() => {
+    const handleStorageChange = () => {
+      try {
+        const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+        const exists = wishlist.some((item: any) => item.id === product.id);
+        setIsWishlisted(exists);
+      } catch (error) {
+        console.error("Error updating wishlist state:", error);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [product.id]);
+
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -106,12 +135,49 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
 
-    toast({
-      title: isWishlisted ? "Removed from wishlist" : "Added to wishlist",
-      description: `${product.name} ${isWishlisted ? "removed from" : "added to"} your wishlist`,
-    });
+    try {
+      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+
+      if (isWishlisted) {
+        // ✅ Remove from wishlist
+        const filtered = wishlist.filter((item: any) => item.id !== product.id);
+        localStorage.setItem("wishlist", JSON.stringify(filtered));
+        setIsWishlisted(false);
+
+        toast({
+          title: "Removed from wishlist",
+          description: `${product.name} removed from your wishlist`,
+        });
+      } else {
+        // ✅ Add to wishlist
+        const newItem = {
+          id: product.id,
+          name: product.name,
+          price: priceNumber,
+          image: product.imageUrl || "/placeholder.svg",
+        };
+
+        wishlist.push(newItem);
+        localStorage.setItem("wishlist", JSON.stringify(wishlist));
+        setIsWishlisted(true);
+
+        toast({
+          title: "Added to wishlist",
+          description: `${product.name} added to your wishlist`,
+        });
+      }
+
+      // ✅ Trigger storage event for other components
+      window.dispatchEvent(new Event("storage"));
+    } catch (error) {
+      console.error("Error updating wishlist:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update wishlist",
+        variant: "destructive",
+      });
+    }
   };
 
   if (viewMode === "list") {
