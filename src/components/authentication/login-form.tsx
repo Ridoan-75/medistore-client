@@ -20,8 +20,9 @@ import {
   EyeOff,
   LogIn,
   Loader2,
-  ShieldCheck,
   ArrowRight,
+  UserPlus,
+  Shield,
 } from "lucide-react";
 import { authClient } from "@/src/lib/auth-client";
 import { toast } from "../ui/use-toast";
@@ -57,29 +58,51 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const { error } = await authClient.signIn.email({
-        email: formData.email,
+      const { data, error } = await authClient.signIn.email({
+        email: formData.email.trim(),
         password: formData.password,
       });
 
       if (error) {
         toast({
           title: "Login failed",
-          description: error.message,
+          description: error.message || "Invalid email or password",
           variant: "destructive",
         });
         setIsLoading(false);
         return;
       }
 
+      // ✅ SUCCESS - Get user data
+      const user = data?.user;
+      
+      // ✅ Save user to localStorage for useAuth hook
+      if (user) {
+        localStorage.setItem('medistore_user', JSON.stringify({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          image: user.image,
+          emailVerified: user.emailVerified,
+        }));
+      }
+      
       toast({
         title: "Welcome back!",
-        description: "You have successfully logged in.",
+        description: `Logged in as ${user?.name || user?.email}`,
       });
 
+      // ✅ ALWAYS redirect to home page (regardless of role)
       router.push("/");
-      router.refresh();
-    } catch {
+
+      // ✅ Small delay then reload to update header
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+    } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
         description: "An unexpected error occurred. Please try again.",
@@ -92,52 +115,58 @@ export function LoginForm() {
   const isFormValid = formData.email.trim() && formData.password.trim();
 
   return (
-    <Card className="w-full max-w-md mx-auto border-2 shadow-xl">
-      <CardHeader className="text-center pb-2">
-        <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/25">
-          <ShieldCheck className="h-8 w-8 text-white" />
+    <Card className="w-full max-w-md mx-auto border-2 shadow-xl rounded-2xl">
+      <CardHeader className="text-center pb-4">
+        <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <Shield className="h-8 w-8 text-white" />
         </div>
 
-        <CardTitle className="text-2xl md:text-3xl font-bold">
+        <CardTitle className="text-3xl font-bold text-gray-900">
           Welcome Back
         </CardTitle>
 
-        <CardDescription className="text-base">
+        <CardDescription className="text-base text-gray-600">
           Sign in to your MediStore account
         </CardDescription>
       </CardHeader>
 
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Email Field */}
           <div className="space-y-2">
-            <Label htmlFor="email" className="flex items-center gap-2 font-medium">
-              <Mail className="h-4 w-4 text-muted-foreground" />
+            <Label 
+              htmlFor="email" 
+              className="flex items-center gap-2 font-semibold text-gray-700"
+            >
+              <Mail className="h-4 w-4 text-green-600" />
               Email Address
             </Label>
-            <div className="relative">
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="your.email@example.com"
-                value={formData.email}
-                onChange={handleChange}
-                className="h-12 pl-4 border-2 focus:border-primary"
-                required
-                autoComplete="email"
-              />
-            </div>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="your.email@example.com"
+              value={formData.email}
+              onChange={handleChange}
+              className="h-12 border-2 focus:border-green-600 rounded-xl"
+              required
+              autoComplete="email"
+            />
           </div>
 
+          {/* Password Field */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="flex items-center gap-2 font-medium">
-                <Lock className="h-4 w-4 text-muted-foreground" />
+              <Label 
+                htmlFor="password" 
+                className="flex items-center gap-2 font-semibold text-gray-700"
+              >
+                <Lock className="h-4 w-4 text-green-600" />
                 Password
               </Label>
               <Link
                 href="/forgot-password"
-                className="text-sm text-primary hover:text-primary/80 hover:underline font-medium"
+                className="text-sm text-green-600 hover:text-green-700 hover:underline font-medium"
               >
                 Forgot password?
               </Link>
@@ -150,14 +179,14 @@ export function LoginForm() {
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
-                className="h-12 pl-4 pr-12 border-2 focus:border-primary"
+                className="h-12 pr-12 border-2 focus:border-green-600 rounded-xl"
                 required
                 autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-600 transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -169,10 +198,11 @@ export function LoginForm() {
             </div>
           </div>
 
+          {/* Submit Button */}
           <Button
             type="submit"
             disabled={isLoading || !isFormValid}
-            className="w-full h-12 bg-gradient-to-r from-primary to-primary/80 hover:opacity-90 text-white font-semibold text-base shadow-lg shadow-primary/25 transition-all"
+            className="w-full h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold text-base shadow-lg rounded-xl transition-all"
           >
             {isLoading ? (
               <>
@@ -188,35 +218,39 @@ export function LoginForm() {
           </Button>
         </form>
 
+        {/* Divider */}
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border" />
+            <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">
-              New to MediStore?
+            <span className="bg-white px-3 text-gray-500 font-medium">
+              Don't have an account?
             </span>
           </div>
         </div>
 
+        {/* Register Button */}
         <Button
           asChild
           variant="outline"
-          className="w-full h-12 border-2 font-semibold text-base"
+          className="w-full h-12 border-2 border-gray-300 hover:border-green-600 hover:bg-green-50 font-semibold text-base rounded-xl transition-all"
         >
           <Link href="/register">
+            <UserPlus className="h-5 w-5 mr-2" />
             Create an account
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-5 w-5 ml-2" />
           </Link>
         </Button>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
+        {/* Terms */}
+        <p className="text-center text-xs text-gray-500 mt-6">
           By signing in, you agree to our{" "}
-          <Link href="/terms" className="text-primary hover:underline">
+          <Link href="/terms" className="text-green-600 hover:underline font-medium">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-primary hover:underline">
+          <Link href="/privacy" className="text-green-600 hover:underline font-medium">
             Privacy Policy
           </Link>
         </p>

@@ -18,6 +18,8 @@ import {
   XCircle,
   AlertTriangle,
   Boxes,
+  ShoppingBag,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
@@ -58,7 +60,9 @@ type ProductStatus = "AVAILABLE" | "DISCONTINUED" | "OUT_OF_STOCK";
 
 interface StatusConfig {
   variant: "default" | "secondary" | "destructive" | "outline";
-  className: string;
+  bgColor: string;
+  textColor: string;
+  borderColor: string;
   icon: typeof CheckCircle;
   label: string;
 }
@@ -66,19 +70,25 @@ interface StatusConfig {
 const STATUS_CONFIG: Record<string, StatusConfig> = {
   AVAILABLE: {
     variant: "default",
-    className: "bg-green-500/10 text-green-600 border-green-500/20",
+    bgColor: "bg-emerald-100",
+    textColor: "text-emerald-700",
+    borderColor: "border-emerald-300",
     icon: CheckCircle,
     label: "Available",
   },
   DISCONTINUED: {
     variant: "secondary",
-    className: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    bgColor: "bg-amber-100",
+    textColor: "text-amber-700",
+    borderColor: "border-amber-300",
     icon: AlertTriangle,
     label: "Discontinued",
   },
   OUT_OF_STOCK: {
     variant: "destructive",
-    className: "bg-red-500/10 text-red-600 border-red-500/20",
+    bgColor: "bg-red-100",
+    textColor: "text-red-700",
+    borderColor: "border-red-300",
     icon: XCircle,
     label: "Out of Stock",
   },
@@ -92,7 +102,13 @@ const formatCurrency = (price: string | number): string => {
 const getStockColor = (stock: number): string => {
   if (stock === 0) return "text-red-600";
   if (stock <= 10) return "text-amber-600";
-  return "text-green-600";
+  return "text-emerald-600";
+};
+
+const getStockBgColor = (stock: number): string => {
+  if (stock === 0) return "bg-red-100 border-red-300";
+  if (stock <= 10) return "bg-amber-100 border-amber-300";
+  return "bg-emerald-100 border-emerald-300";
 };
 
 export default function SellerProductsPage() {
@@ -108,6 +124,7 @@ export default function SellerProductsPage() {
   const productCount = products.length;
   const inStockCount = products.filter((p) => p.stock > 0).length;
   const outOfStockCount = products.filter((p) => p.stock === 0).length;
+  const lowStockCount = products.filter((p) => p.stock > 0 && p.stock <= 10).length;
 
   const fetchProducts = async (showRefreshToast = false) => {
     if (showRefreshToast) {
@@ -187,23 +204,23 @@ export default function SellerProductsPage() {
     const Icon = config.icon;
 
     return (
-      <Badge variant={config.variant} className={`${config.className} font-semibold`}>
-        <Icon className="h-3 w-3 mr-1" />
-        {config.label}
-      </Badge>
+      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 ${config.borderColor} ${config.bgColor} ${config.textColor} font-semibold text-sm shadow-sm`}>
+        <Icon className="h-4 w-4" />
+        <span>{config.label}</span>
+      </div>
     );
   };
 
   if (isLoading) {
     return (
       <div className="p-6">
-        <Card className="border-2">
-          <CardContent className="py-16">
+        <Card className="border-2 border-gray-200 shadow-lg rounded-xl">
+          <CardContent className="py-20">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                <Loader2 className="h-8 w-8 text-primary animate-spin" />
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center border-2 border-blue-300">
+                <Loader2 className="h-10 w-10 text-blue-600 animate-spin" />
               </div>
-              <p className="text-muted-foreground font-medium">
+              <p className="text-gray-700 font-semibold text-lg">
                 Loading your products...
               </p>
             </div>
@@ -215,43 +232,90 @@ export default function SellerProductsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <Card className="border-2 shadow-sm">
-        <CardHeader className="border-b bg-muted/30">
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50 shadow-md">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-700">Total Products</p>
+                <h3 className="text-3xl font-bold text-blue-900 mt-2">{productCount}</h3>
+              </div>
+              <div className="w-14 h-14 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+                <ShoppingBag className="h-7 w-7 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50 shadow-md">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-emerald-700">In Stock</p>
+                <h3 className="text-3xl font-bold text-emerald-900 mt-2">{inStockCount}</h3>
+              </div>
+              <div className="w-14 h-14 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                <CheckCircle className="h-7 w-7 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50 shadow-md">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-amber-700">Low Stock</p>
+                <h3 className="text-3xl font-bold text-amber-900 mt-2">{lowStockCount}</h3>
+              </div>
+              <div className="w-14 h-14 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg">
+                <AlertTriangle className="h-7 w-7 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50 shadow-md">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-700">Out of Stock</p>
+                <h3 className="text-3xl font-bold text-red-900 mt-2">{outOfStockCount}</h3>
+              </div>
+              <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                <XCircle className="h-7 w-7 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Products Table */}
+      <Card className="border-2 border-gray-200 shadow-lg rounded-xl overflow-hidden">
+        <CardHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100/50 px-6 py-5">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
                 <Package className="h-6 w-6 text-white" />
               </div>
               <div>
-                <CardTitle className="text-xl">My Products</CardTitle>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {productCount} products in your inventory
+                <CardTitle className="text-xl font-bold text-gray-900">Product Inventory</CardTitle>
+                <p className="text-sm text-gray-600 mt-1">
+                  Manage your product catalog
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex gap-2">
-                <div className="px-3 py-1.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20 flex items-center gap-1.5">
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  <span className="text-xs font-medium">{inStockCount} In Stock</span>
-                </div>
-                {outOfStockCount > 0 && (
-                  <div className="px-3 py-1.5 rounded-full bg-red-500/10 text-red-600 border border-red-500/20 flex items-center gap-1.5">
-                    <XCircle className="h-3.5 w-3.5" />
-                    <span className="text-xs font-medium">{outOfStockCount} Out</span>
-                  </div>
-                )}
-              </div>
-
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <Input
                   type="text"
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-10 w-56 border-2"
+                  className="pl-10 h-11 w-64 border-2 border-gray-200 rounded-xl focus:border-blue-500"
                 />
               </div>
 
@@ -260,13 +324,16 @@ export default function SellerProductsPage() {
                 size="sm"
                 onClick={() => fetchProducts(true)}
                 disabled={isRefreshing}
-                className="h-10 border-2"
+                className="h-11 px-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
                 Refresh
               </Button>
 
-              <Button asChild className="h-10 bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25">
+              <Button 
+                asChild 
+                className="h-11 px-5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg rounded-xl font-semibold"
+              >
                 <Link href="/seller-dashboard/products/add">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Product
@@ -278,24 +345,31 @@ export default function SellerProductsPage() {
 
         <CardContent className="p-0">
           {filteredProducts.length === 0 ? (
-            <div className="py-16 text-center">
-              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
-                <Package className="h-10 w-10 text-muted-foreground" />
+            <div className="py-20 text-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6 border-2 border-gray-300">
+                <Package className="h-12 w-12 text-gray-600" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
                 {searchQuery ? "No Products Found" : "No Products Yet"}
               </h3>
-              <p className="text-muted-foreground max-w-sm mx-auto mb-6">
+              <p className="text-gray-600 max-w-sm mx-auto mb-6">
                 {searchQuery
                   ? `No products matching "${searchQuery}"`
-                  : "Start by adding your first product to sell."}
+                  : "Start building your inventory by adding your first product."}
               </p>
               {searchQuery ? (
-                <Button variant="outline" onClick={() => setSearchQuery("")}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSearchQuery("")}
+                  className="h-11 px-6 border-2 rounded-xl"
+                >
                   Clear Search
                 </Button>
               ) : (
-                <Button asChild>
+                <Button 
+                  asChild
+                  className="h-11 px-6 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg rounded-xl"
+                >
                   <Link href="/seller-dashboard/products/add">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Your First Product
@@ -307,23 +381,23 @@ export default function SellerProductsPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/30 hover:bg-muted/30">
-                    <TableHead className="w-16 font-semibold">Image</TableHead>
-                    <TableHead className="font-semibold">Product</TableHead>
-                    <TableHead className="font-semibold">Category</TableHead>
-                    <TableHead className="text-right font-semibold">Price</TableHead>
-                    <TableHead className="text-right font-semibold">Stock</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="text-right font-semibold">Actions</TableHead>
+                  <TableRow className="bg-gray-50 hover:bg-gray-50 border-b-2">
+                    <TableHead className="w-20 font-bold text-gray-900">Image</TableHead>
+                    <TableHead className="font-bold text-gray-900">Product Details</TableHead>
+                    <TableHead className="font-bold text-gray-900">Category</TableHead>
+                    <TableHead className="text-right font-bold text-gray-900">Price</TableHead>
+                    <TableHead className="text-center font-bold text-gray-900">Stock</TableHead>
+                    <TableHead className="font-bold text-gray-900">Status</TableHead>
+                    <TableHead className="text-right font-bold text-gray-900">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
 
                 <TableBody>
                   {filteredProducts.map((product) => (
-                    <TableRow key={product.id} className="hover:bg-muted/30">
+                    <TableRow key={product.id} className="hover:bg-blue-50/50 transition-colors border-b">
                       <TableCell>
                         {product.imageUrl ? (
-                          <div className="relative w-14 h-14 rounded-xl overflow-hidden border-2 border-border bg-muted">
+                          <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-50 shadow-sm">
                             <Image
                               src={product.imageUrl}
                               alt={product.name}
@@ -332,21 +406,21 @@ export default function SellerProductsPage() {
                             />
                           </div>
                         ) : (
-                          <div className="w-14 h-14 rounded-xl border-2 border-dashed border-border bg-muted flex items-center justify-center">
-                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                          <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 bg-gray-100 flex items-center justify-center">
+                            <ImageIcon className="h-7 w-7 text-gray-400" />
                           </div>
                         )}
                       </TableCell>
 
                       <TableCell>
-                        <div className="space-y-1">
-                          <p className="font-semibold text-foreground line-clamp-1">
+                        <div className="space-y-1.5">
+                          <p className="font-semibold text-gray-900 line-clamp-2 leading-snug">
                             {product.name}
                           </p>
                           {product.manufacturer && (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Factory className="h-3 w-3" />
-                              <span>{product.manufacturer}</span>
+                            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-lg w-fit border border-gray-200">
+                              <Factory className="h-3.5 w-3.5" />
+                              <span className="font-medium">{product.manufacturer}</span>
                             </div>
                           )}
                         </div>
@@ -354,27 +428,29 @@ export default function SellerProductsPage() {
 
                       <TableCell>
                         {product.category?.name ? (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-full">
-                            <Tag className="h-3 w-3" />
-                            <span className="text-xs font-medium">
+                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-xl border-2 border-blue-200 shadow-sm">
+                            <Tag className="h-3.5 w-3.5" />
+                            <span className="text-sm font-semibold">
                               {product.category.name}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-muted-foreground">—</span>
+                          <span className="text-sm text-gray-400">—</span>
                         )}
                       </TableCell>
 
                       <TableCell className="text-right">
-                        <span className="text-lg font-bold text-primary">
-                          {formatCurrency(product.price)}
-                        </span>
+                        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 px-4 py-2 rounded-xl border-2 border-emerald-200 inline-block shadow-sm">
+                          <span className="text-lg font-bold text-emerald-700">
+                            {formatCurrency(product.price)}
+                          </span>
+                        </div>
                       </TableCell>
 
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <TableCell className="text-center">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 ${getStockBgColor(product.stock)} shadow-sm`}>
                           <Boxes className={`h-4 w-4 ${getStockColor(product.stock)}`} />
-                          <span className={`font-semibold ${getStockColor(product.stock)}`}>
+                          <span className={`font-bold ${getStockColor(product.stock)}`}>
                             {product.stock}
                           </span>
                         </div>
@@ -390,7 +466,7 @@ export default function SellerProductsPage() {
                             asChild
                             variant="outline"
                             size="sm"
-                            className="h-9 w-9 p-0 border-2 hover:border-amber-500/50 hover:bg-amber-500/5"
+                            className="h-10 w-10 p-0 border-2 border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300 rounded-xl"
                           >
                             <Link href={`/seller-dashboard/products/edit/${product.id}`}>
                               <Pencil className="h-4 w-4" />
@@ -402,43 +478,45 @@ export default function SellerProductsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-9 w-9 p-0 border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive"
+                                className="h-10 w-10 p-0 border-2 border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 rounded-xl"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
 
-                            <AlertDialogContent>
+                            <AlertDialogContent className="rounded-2xl border-2">
                               <AlertDialogHeader>
-                                <div className="flex items-center gap-3 mb-2">
-                                  <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center">
-                                    <AlertTriangle className="h-6 w-6 text-destructive" />
+                                <div className="flex items-center gap-4 mb-3">
+                                  <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center border-2 border-red-300">
+                                    <AlertTriangle className="h-7 w-7 text-red-600" />
                                   </div>
                                   <div>
-                                    <AlertDialogTitle>Delete Product</AlertDialogTitle>
-                                    <AlertDialogDescription className="mt-1">
+                                    <AlertDialogTitle className="text-xl font-bold text-gray-900">
+                                      Delete Product
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription className="mt-1 text-gray-600">
                                       Are you sure you want to delete this product?
                                     </AlertDialogDescription>
                                   </div>
                                 </div>
                               </AlertDialogHeader>
 
-                              <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4 my-2">
-                                <p className="font-semibold text-foreground">
+                              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 my-3">
+                                <p className="font-bold text-gray-900 text-lg">
                                   {product.name}
                                 </p>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  This action cannot be undone.
+                                <p className="text-sm text-gray-600 mt-1">
+                                  This action cannot be undone. The product will be permanently removed.
                                 </p>
                               </div>
 
-                              <AlertDialogFooter className="gap-2">
-                                <AlertDialogCancel className="border-2">
+                              <AlertDialogFooter className="gap-3">
+                                <AlertDialogCancel className="h-11 px-6 border-2 rounded-xl">
                                   Cancel
                                 </AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => handleDelete(product.id)}
-                                  className="bg-destructive hover:bg-destructive/90"
+                                  className="h-11 px-6 bg-red-600 hover:bg-red-700 rounded-xl font-semibold shadow-lg"
                                   disabled={deletingId === product.id}
                                 >
                                   {deletingId === product.id ? (
@@ -468,9 +546,11 @@ export default function SellerProductsPage() {
       </Card>
 
       {filteredProducts.length > 0 && searchQuery && (
-        <p className="text-sm text-muted-foreground text-center">
-          Showing {filteredProducts.length} of {productCount} products
-        </p>
+        <div className="text-center">
+          <p className="text-sm text-gray-600 bg-gray-100 inline-block px-4 py-2 rounded-xl border border-gray-200">
+            Showing <span className="font-bold text-gray-900">{filteredProducts.length}</span> of <span className="font-bold text-gray-900">{productCount}</span> products
+          </p>
+        </div>
       )}
     </div>
   );

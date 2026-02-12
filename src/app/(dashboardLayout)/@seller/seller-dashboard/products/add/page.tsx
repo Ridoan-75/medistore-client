@@ -16,6 +16,7 @@ import {
   Plus,
   Save,
   X,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -72,24 +73,43 @@ export default function AddProductPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingCategories, setIsFetchingCategories] = useState(true);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const { data, error } = await allCategoriesAction();
+      try {
+        setIsFetchingCategories(true);
+        setCategoryError(null);
+        
+        const { data, error } = await allCategoriesAction();
 
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load categories",
-          variant: "destructive",
-        });
-      } else if (data) {
-        setCategories(data);
+        if (error) {
+          console.error("Category fetch error:", error);
+          setCategoryError(error.message || "Failed to load categories");
+          toast({
+            title: "Error",
+            description: "Failed to load categories. Please refresh the page.",
+            variant: "destructive",
+          });
+        } else if (data && Array.isArray(data)) {
+          console.log("Categories loaded:", data);
+          setCategories(data);
+          
+          if (data.length === 0) {
+            setCategoryError("No categories available. Please contact admin to add categories.");
+          }
+        } else {
+          console.error("Invalid category data:", data);
+          setCategoryError("Invalid category data received");
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching categories:", err);
+        setCategoryError("An unexpected error occurred");
+      } finally {
+        setIsFetchingCategories(false);
       }
-
-      setIsFetchingCategories(false);
     };
 
     fetchCategories();
@@ -179,22 +199,23 @@ export default function AddProductPage() {
   };
 
   const getInputClassName = (fieldName: keyof FormErrors): string => {
-    return `h-11 border-2 ${
+    return `h-12 border-2 rounded-xl ${
       errors[fieldName]
-        ? "border-destructive focus-visible:ring-destructive"
-        : "focus:border-primary"
+        ? "border-red-300 focus-visible:ring-red-500"
+        : "border-gray-200 focus:border-blue-500"
     }`;
   };
 
   return (
     <div className="p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex items-center gap-4">
           <Button
             asChild
             variant="outline"
             size="icon"
-            className="h-10 w-10 border-2 rounded-xl"
+            className="h-11 w-11 border-2 rounded-xl hover:bg-gray-50"
           >
             <Link href="/seller-dashboard/products">
               <ArrowLeft className="h-5 w-5" />
@@ -202,87 +223,93 @@ export default function AddProductPage() {
           </Button>
 
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
-              <Plus className="h-5 w-5 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+              <Plus className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">
+              <h1 className="text-2xl font-bold text-gray-900">
                 Add New Product
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Fill in the details below
+              <p className="text-sm text-gray-600">
+                Fill in the details to add a new medicine
               </p>
             </div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Card className="border-2 shadow-sm">
-            <CardHeader className="border-b bg-muted/30">
+          {/* Product Information Card */}
+          <Card className="border-2 border-gray-200 shadow-lg rounded-xl">
+            <CardHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100/50 px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                  <Package className="h-5 w-5 text-primary" />
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center border-2 border-blue-200">
+                  <Package className="h-5 w-5 text-blue-600" />
                 </div>
-                <CardTitle className="text-lg">Product Information</CardTitle>
+                <CardTitle className="text-lg font-bold text-gray-900">
+                  Product Information
+                </CardTitle>
               </div>
             </CardHeader>
 
-            <CardContent className="p-6 space-y-5">
+            <CardContent className="p-6 space-y-6">
+              {/* Product Name */}
               <div className="space-y-2">
-                <Label htmlFor="name" className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  Product Name <span className="text-destructive">*</span>
+                <Label htmlFor="name" className="flex items-center gap-2 font-semibold text-gray-900">
+                  <Tag className="h-4 w-4 text-gray-600" />
+                  Product Name <span className="text-red-600">*</span>
                 </Label>
                 <Input
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Enter product name"
+                  placeholder="e.g., Paracetamol 500mg"
                   className={getInputClassName("name")}
                 />
                 {errors.name && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <X className="h-3 w-3" />
+                  <p className="text-sm text-red-600 flex items-center gap-1 font-medium">
+                    <X className="h-3.5 w-3.5" />
                     {errors.name}
                   </p>
                 )}
               </div>
 
+              {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  Description <span className="text-destructive">*</span>
+                <Label htmlFor="description" className="flex items-center gap-2 font-semibold text-gray-900">
+                  <FileText className="h-4 w-4 text-gray-600" />
+                  Description <span className="text-red-600">*</span>
                 </Label>
                 <Textarea
                   id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Enter product description"
+                  placeholder="Describe the product, its uses, and benefits..."
                   rows={4}
-                  className={`border-2 resize-none ${
+                  className={`border-2 rounded-xl resize-none ${
                     errors.description
-                      ? "border-destructive focus-visible:ring-destructive"
-                      : "focus:border-primary"
+                      ? "border-red-300 focus-visible:ring-red-500"
+                      : "border-gray-200 focus:border-blue-500"
                   }`}
                 />
                 {errors.description && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <X className="h-3 w-3" />
+                  <p className="text-sm text-red-600 flex items-center gap-1 font-medium">
+                    <X className="h-3.5 w-3.5" />
                     {errors.description}
                   </p>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Price and Stock */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="price" className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    Price (৳) <span className="text-destructive">*</span>
+                  <Label htmlFor="price" className="flex items-center gap-2 font-semibold text-gray-900">
+                    <DollarSign className="h-4 w-4 text-gray-600" />
+                    Price (৳) <span className="text-red-600">*</span>
                   </Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">
                       ৳
                     </span>
                     <Input
@@ -294,21 +321,21 @@ export default function AddProductPage() {
                       value={formData.price}
                       onChange={handleChange}
                       placeholder="0.00"
-                      className={`pl-8 ${getInputClassName("price")}`}
+                      className={`pl-10 ${getInputClassName("price")}`}
                     />
                   </div>
                   {errors.price && (
-                    <p className="text-sm text-destructive flex items-center gap-1">
-                      <X className="h-3 w-3" />
+                    <p className="text-sm text-red-600 flex items-center gap-1 font-medium">
+                      <X className="h-3.5 w-3.5" />
                       {errors.price}
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="stock" className="flex items-center gap-2">
-                    <Boxes className="h-4 w-4 text-muted-foreground" />
-                    Stock <span className="text-destructive">*</span>
+                  <Label htmlFor="stock" className="flex items-center gap-2 font-semibold text-gray-900">
+                    <Boxes className="h-4 w-4 text-gray-600" />
+                    Stock Quantity <span className="text-red-600">*</span>
                   </Label>
                   <Input
                     id="stock"
@@ -321,23 +348,47 @@ export default function AddProductPage() {
                     className={getInputClassName("stock")}
                   />
                   {errors.stock && (
-                    <p className="text-sm text-destructive flex items-center gap-1">
-                      <X className="h-3 w-3" />
+                    <p className="text-sm text-red-600 flex items-center gap-1 font-medium">
+                      <X className="h-3.5 w-3.5" />
                       {errors.stock}
                     </p>
                   )}
                 </div>
               </div>
 
+              {/* Category Select */}
               <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  Category <span className="text-destructive">*</span>
+                <Label className="flex items-center gap-2 font-semibold text-gray-900">
+                  <Tag className="h-4 w-4 text-gray-600" />
+                  Category <span className="text-red-600">*</span>
                 </Label>
+                
                 {isFetchingCategories ? (
-                  <div className="flex items-center gap-2 text-muted-foreground h-11 px-3 border-2 border-dashed rounded-lg">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Loading categories...</span>
+                  <div className="flex items-center gap-3 text-gray-600 h-12 px-4 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                    <span className="text-sm font-medium">Loading categories...</span>
+                  </div>
+                ) : categoryError ? (
+                  <div className="flex items-center gap-3 text-red-600 h-auto min-h-12 px-4 py-3 border-2 border-red-300 rounded-xl bg-red-50">
+                    <AlertCircle className="h-5 w-5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold">{categoryError}</p>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto p-0 text-red-700 underline text-xs"
+                        onClick={() => window.location.reload()}
+                      >
+                        Try again
+                      </Button>
+                    </div>
+                  </div>
+                ) : categories.length === 0 ? (
+                  <div className="flex items-center gap-3 text-amber-700 h-auto min-h-12 px-4 py-3 border-2 border-amber-300 rounded-xl bg-amber-50">
+                    <AlertCircle className="h-5 w-5 shrink-0" />
+                    <p className="text-sm font-semibold">
+                      No categories available. Please contact admin to add categories first.
+                    </p>
                   </div>
                 ) : (
                   <Select
@@ -345,73 +396,81 @@ export default function AddProductPage() {
                     onValueChange={handleCategoryChange}
                   >
                     <SelectTrigger
-                      className={`h-11 border-2 ${
+                      className={`h-12 border-2 rounded-xl font-medium ${
                         errors.categoryId
-                          ? "border-destructive"
-                          : "focus:border-primary"
+                          ? "border-red-300"
+                          : "border-gray-200 focus:border-blue-500"
                       }`}
                     >
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-xl border-2">
                       {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
+                        <SelectItem 
+                          key={category.id} 
+                          value={category.id}
+                          className="cursor-pointer rounded-lg my-1 mx-1"
+                        >
                           {category.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 )}
+                
                 {errors.categoryId && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <X className="h-3 w-3" />
+                  <p className="text-sm text-red-600 flex items-center gap-1 font-medium">
+                    <X className="h-3.5 w-3.5" />
                     {errors.categoryId}
                   </p>
                 )}
               </div>
 
+              {/* Image URL */}
               <div className="space-y-2">
-                <Label htmlFor="imageUrl" className="flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="imageUrl" className="flex items-center gap-2 font-semibold text-gray-900">
+                  <ImageIcon className="h-4 w-4 text-gray-600" />
                   Image URL{" "}
-                  <span className="text-muted-foreground text-xs">(Optional)</span>
+                  <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                 </Label>
                 <Input
                   id="imageUrl"
                   name="imageUrl"
                   value={formData.imageUrl}
                   onChange={handleChange}
-                  placeholder="https://example.com/image.jpg"
-                  className="h-11 border-2"
+                  placeholder="https://example.com/product-image.jpg"
+                  className="h-12 border-2 border-gray-200 rounded-xl"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Enter a direct URL to the product image
+                <p className="text-xs text-gray-600">
+                  Provide a direct URL to the product image
                 </p>
               </div>
 
+              {/* Manufacturer */}
               <div className="space-y-2">
-                <Label htmlFor="manufacturer" className="flex items-center gap-2">
-                  <Factory className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="manufacturer" className="flex items-center gap-2 font-semibold text-gray-900">
+                  <Factory className="h-4 w-4 text-gray-600" />
                   Manufacturer{" "}
-                  <span className="text-muted-foreground text-xs">(Optional)</span>
+                  <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                 </Label>
                 <Input
                   id="manufacturer"
                   name="manufacturer"
                   value={formData.manufacturer}
                   onChange={handleChange}
-                  placeholder="Enter manufacturer name"
-                  className="h-11 border-2"
+                  placeholder="e.g., Square Pharmaceuticals"
+                  className="h-12 border-2 border-gray-200 rounded-xl"
                 />
               </div>
             </CardContent>
           </Card>
 
+          {/* Action Buttons */}
           <div className="flex items-center gap-4">
             <Button
               type="submit"
-              disabled={isLoading}
-              className="flex-1 h-12 bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg shadow-primary/25 font-semibold"
+              disabled={isLoading || isFetchingCategories || categories.length === 0}
+              className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg font-semibold rounded-xl"
             >
               {isLoading ? (
                 <>
@@ -429,7 +488,7 @@ export default function AddProductPage() {
             <Button
               type="button"
               variant="outline"
-              className="h-12 px-6 border-2"
+              className="h-12 px-8 border-2 rounded-xl hover:bg-gray-50"
               asChild
             >
               <Link href="/seller-dashboard/products">

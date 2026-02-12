@@ -17,6 +17,7 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 
 const ORDER_STATUSES = ["PLACED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
@@ -31,40 +32,58 @@ interface OrderStatusSelectProps {
 interface StatusConfig {
   icon: typeof Clock;
   label: string;
-  className: string;
-  triggerClassName: string;
+  iconColor: string;
+  bgColor: string;
+  borderColor: string;
+  textColor: string;
+  hoverBg: string;
 }
 
 const STATUS_CONFIG: Record<OrderStatus, StatusConfig> = {
   PLACED: {
     icon: Clock,
     label: "Placed",
-    className: "text-gray-600",
-    triggerClassName: "border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100",
+    iconColor: "text-slate-600",
+    bgColor: "bg-slate-50",
+    borderColor: "border-slate-200",
+    textColor: "text-slate-700",
+    hoverBg: "hover:bg-slate-100",
   },
   PROCESSING: {
     icon: Box,
     label: "Processing",
-    className: "text-amber-600",
-    triggerClassName: "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100",
+    iconColor: "text-amber-600",
+    bgColor: "bg-amber-50",
+    borderColor: "border-amber-200",
+    textColor: "text-amber-700",
+    hoverBg: "hover:bg-amber-100",
   },
   SHIPPED: {
     icon: Truck,
     label: "Shipped",
-    className: "text-blue-600",
-    triggerClassName: "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100",
+    iconColor: "text-blue-600",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-200",
+    textColor: "text-blue-700",
+    hoverBg: "hover:bg-blue-100",
   },
   DELIVERED: {
     icon: CheckCircle,
     label: "Delivered",
-    className: "text-green-600",
-    triggerClassName: "border-green-300 bg-green-50 text-green-700 hover:bg-green-100",
+    iconColor: "text-emerald-600",
+    bgColor: "bg-emerald-50",
+    borderColor: "border-emerald-200",
+    textColor: "text-emerald-700",
+    hoverBg: "hover:bg-emerald-100",
   },
   CANCELLED: {
     icon: XCircle,
     label: "Cancelled",
-    className: "text-red-600",
-    triggerClassName: "border-red-300 bg-red-50 text-red-700 hover:bg-red-100",
+    iconColor: "text-rose-600",
+    bgColor: "bg-rose-50",
+    borderColor: "border-rose-200",
+    textColor: "text-rose-700",
+    hoverBg: "hover:bg-rose-100",
   },
 };
 
@@ -104,37 +123,67 @@ export default function OrderStatusSelect({
       disabled={isPending}
     >
       <SelectTrigger
-        className={`w-[140px] h-9 border-2 rounded-lg font-medium transition-all ${config.triggerClassName} ${
-          isPending ? "opacity-70" : ""
-        }`}
+        className={`
+          w-[160px] h-10 
+          ${config.bgColor} 
+          ${config.borderColor} 
+          ${config.textColor}
+          ${config.hoverBg}
+          border-2 rounded-xl 
+          font-semibold text-sm
+          shadow-sm
+          transition-all duration-200
+          focus:ring-2 focus:ring-offset-2 focus:ring-${config.borderColor}
+          ${isPending ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
+        `}
       >
         {isPending ? (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">Updating...</span>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Updating...</span>
+            </div>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <StatusIcon className="h-4 w-4" />
-            <SelectValue />
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <StatusIcon className={`h-4 w-4 ${config.iconColor}`} />
+              <SelectValue />
+            </div>
+            <ChevronDown className="h-4 w-4 opacity-50" />
           </div>
         )}
       </SelectTrigger>
 
-      <SelectContent className="min-w-[140px]">
+      <SelectContent className="min-w-[160px] border-2 rounded-xl shadow-lg">
         {ORDER_STATUSES.map((orderStatus) => {
           const statusConfig = STATUS_CONFIG[orderStatus];
           const Icon = statusConfig.icon;
+          const isSelected = orderStatus === status;
 
           return (
             <SelectItem
               key={orderStatus}
               value={orderStatus}
-              className="cursor-pointer"
+              className={`
+                cursor-pointer rounded-lg my-1 mx-1
+                ${statusConfig.hoverBg}
+                ${isSelected ? statusConfig.bgColor : ""}
+                transition-colors duration-150
+              `}
             >
-              <div className="flex items-center gap-2">
-                <Icon className={`h-4 w-4 ${statusConfig.className}`} />
-                <span className="font-medium">{statusConfig.label}</span>
+              <div className="flex items-center gap-2.5 py-1">
+                <div className={`
+                  p-1.5 rounded-lg
+                  ${statusConfig.bgColor}
+                  ${statusConfig.borderColor}
+                  border
+                `}>
+                  <Icon className={`h-4 w-4 ${statusConfig.iconColor}`} />
+                </div>
+                <span className={`font-semibold ${statusConfig.textColor}`}>
+                  {statusConfig.label}
+                </span>
               </div>
             </SelectItem>
           );

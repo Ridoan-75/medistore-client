@@ -16,6 +16,7 @@ import {
   Save,
   X,
   Pencil,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -207,23 +208,23 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   };
 
   const getInputClassName = (fieldName: keyof FormErrors): string => {
-    return `h-11 border-2 ${
+    return `h-12 border-2 rounded-xl ${
       errors[fieldName]
-        ? "border-destructive focus-visible:ring-destructive"
-        : "focus:border-primary"
+        ? "border-red-300 focus-visible:ring-red-500"
+        : "border-gray-200 focus:border-amber-500"
     }`;
   };
 
   if (isFetching) {
     return (
       <div className="p-6">
-        <Card className="border-2 max-w-2xl mx-auto">
-          <CardContent className="py-16">
+        <Card className="border-2 border-gray-200 shadow-lg max-w-3xl mx-auto rounded-xl">
+          <CardContent className="py-20">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                <Loader2 className="h-8 w-8 text-primary animate-spin" />
+              <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl flex items-center justify-center border-2 border-amber-300">
+                <Loader2 className="h-10 w-10 text-amber-600 animate-spin" />
               </div>
-              <p className="text-muted-foreground font-medium">
+              <p className="text-gray-700 font-semibold text-lg">
                 Loading product details...
               </p>
             </div>
@@ -235,13 +236,14 @@ export default function EditProductPage({ params }: EditProductPageProps) {
 
   return (
     <div className="p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex items-center gap-4">
           <Button
             asChild
             variant="outline"
             size="icon"
-            className="h-10 w-10 border-2 rounded-xl"
+            className="h-11 w-11 border-2 rounded-xl hover:bg-gray-50"
           >
             <Link href="/seller-dashboard/products">
               <ArrowLeft className="h-5 w-5" />
@@ -249,90 +251,96 @@ export default function EditProductPage({ params }: EditProductPageProps) {
           </Button>
 
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/25">
-              <Pencil className="h-5 w-5 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Pencil className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">Edit Product</h1>
-              <p className="text-sm text-muted-foreground">
-                Update your product details
+              <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
+              <p className="text-sm text-gray-600">
+                Update your product information
               </p>
             </div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Card className="border-2 shadow-sm">
-            <CardHeader className="border-b bg-muted/30">
+          {/* Product Information Card */}
+          <Card className="border-2 border-gray-200 shadow-lg rounded-xl">
+            <CardHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100/50 px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                  <Package className="h-5 w-5 text-primary" />
+                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center border-2 border-amber-200">
+                  <Package className="h-5 w-5 text-amber-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Product Information</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Editing: {formData.name || "Product"}
+                  <CardTitle className="text-lg font-bold text-gray-900">
+                    Product Information
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 mt-0.5">
+                    Editing: <span className="font-semibold">{formData.name || "Product"}</span>
                   </p>
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="p-6 space-y-5">
+            <CardContent className="p-6 space-y-6">
+              {/* Product Name */}
               <div className="space-y-2">
-                <Label htmlFor="name" className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  Product Name <span className="text-destructive">*</span>
+                <Label htmlFor="name" className="flex items-center gap-2 font-semibold text-gray-900">
+                  <Tag className="h-4 w-4 text-gray-600" />
+                  Product Name <span className="text-red-600">*</span>
                 </Label>
                 <Input
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Enter product name"
+                  placeholder="e.g., Paracetamol 500mg"
                   className={getInputClassName("name")}
                 />
                 {errors.name && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <X className="h-3 w-3" />
+                  <p className="text-sm text-red-600 flex items-center gap-1 font-medium">
+                    <X className="h-3.5 w-3.5" />
                     {errors.name}
                   </p>
                 )}
               </div>
 
+              {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  Description <span className="text-destructive">*</span>
+                <Label htmlFor="description" className="flex items-center gap-2 font-semibold text-gray-900">
+                  <FileText className="h-4 w-4 text-gray-600" />
+                  Description <span className="text-red-600">*</span>
                 </Label>
                 <Textarea
                   id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Enter product description"
+                  placeholder="Describe the product, its uses, and benefits..."
                   rows={4}
-                  className={`border-2 resize-none ${
+                  className={`border-2 rounded-xl resize-none ${
                     errors.description
-                      ? "border-destructive focus-visible:ring-destructive"
-                      : "focus:border-primary"
+                      ? "border-red-300 focus-visible:ring-red-500"
+                      : "border-gray-200 focus:border-amber-500"
                   }`}
                 />
                 {errors.description && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <X className="h-3 w-3" />
+                  <p className="text-sm text-red-600 flex items-center gap-1 font-medium">
+                    <X className="h-3.5 w-3.5" />
                     {errors.description}
                   </p>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Price and Stock */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="price" className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    Price (৳) <span className="text-destructive">*</span>
+                  <Label htmlFor="price" className="flex items-center gap-2 font-semibold text-gray-900">
+                    <DollarSign className="h-4 w-4 text-gray-600" />
+                    Price (৳) <span className="text-red-600">*</span>
                   </Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">
                       ৳
                     </span>
                     <Input
@@ -344,21 +352,21 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                       value={formData.price}
                       onChange={handleChange}
                       placeholder="0.00"
-                      className={`pl-8 ${getInputClassName("price")}`}
+                      className={`pl-10 ${getInputClassName("price")}`}
                     />
                   </div>
                   {errors.price && (
-                    <p className="text-sm text-destructive flex items-center gap-1">
-                      <X className="h-3 w-3" />
+                    <p className="text-sm text-red-600 flex items-center gap-1 font-medium">
+                      <X className="h-3.5 w-3.5" />
                       {errors.price}
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="stock" className="flex items-center gap-2">
-                    <Boxes className="h-4 w-4 text-muted-foreground" />
-                    Stock <span className="text-destructive">*</span>
+                  <Label htmlFor="stock" className="flex items-center gap-2 font-semibold text-gray-900">
+                    <Boxes className="h-4 w-4 text-gray-600" />
+                    Stock Quantity <span className="text-red-600">*</span>
                   </Label>
                   <Input
                     id="stock"
@@ -371,90 +379,109 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                     className={getInputClassName("stock")}
                   />
                   {errors.stock && (
-                    <p className="text-sm text-destructive flex items-center gap-1">
-                      <X className="h-3 w-3" />
+                    <p className="text-sm text-red-600 flex items-center gap-1 font-medium">
+                      <X className="h-3.5 w-3.5" />
                       {errors.stock}
                     </p>
                   )}
                 </div>
               </div>
 
+              {/* Category Select */}
               <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  Category <span className="text-destructive">*</span>
+                <Label className="flex items-center gap-2 font-semibold text-gray-900">
+                  <Tag className="h-4 w-4 text-gray-600" />
+                  Category <span className="text-red-600">*</span>
                 </Label>
-                <Select
-                  value={formData.categoryId}
-                  onValueChange={handleCategoryChange}
-                >
-                  <SelectTrigger
-                    className={`h-11 border-2 ${
-                      errors.categoryId
-                        ? "border-destructive"
-                        : "focus:border-primary"
-                    }`}
+                
+                {categories.length === 0 ? (
+                  <div className="flex items-center gap-3 text-amber-700 h-auto min-h-12 px-4 py-3 border-2 border-amber-300 rounded-xl bg-amber-50">
+                    <AlertCircle className="h-5 w-5 shrink-0" />
+                    <p className="text-sm font-semibold">
+                      No categories available
+                    </p>
+                  </div>
+                ) : (
+                  <Select
+                    value={formData.categoryId}
+                    onValueChange={handleCategoryChange}
                   >
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <SelectTrigger
+                      className={`h-12 border-2 rounded-xl font-medium ${
+                        errors.categoryId
+                          ? "border-red-300"
+                          : "border-gray-200 focus:border-amber-500"
+                      }`}
+                    >
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-2">
+                      {categories.map((category) => (
+                        <SelectItem 
+                          key={category.id} 
+                          value={category.id}
+                          className="cursor-pointer rounded-lg my-1 mx-1"
+                        >
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                
                 {errors.categoryId && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <X className="h-3 w-3" />
+                  <p className="text-sm text-red-600 flex items-center gap-1 font-medium">
+                    <X className="h-3.5 w-3.5" />
                     {errors.categoryId}
                   </p>
                 )}
               </div>
 
+              {/* Image URL */}
               <div className="space-y-2">
-                <Label htmlFor="imageUrl" className="flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="imageUrl" className="flex items-center gap-2 font-semibold text-gray-900">
+                  <ImageIcon className="h-4 w-4 text-gray-600" />
                   Image URL{" "}
-                  <span className="text-muted-foreground text-xs">(Optional)</span>
+                  <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                 </Label>
                 <Input
                   id="imageUrl"
                   name="imageUrl"
                   value={formData.imageUrl}
                   onChange={handleChange}
-                  placeholder="https://example.com/image.jpg"
-                  className="h-11 border-2"
+                  placeholder="https://example.com/product-image.jpg"
+                  className="h-12 border-2 border-gray-200 rounded-xl"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Enter a direct URL to the product image
+                <p className="text-xs text-gray-600">
+                  Provide a direct URL to the product image
                 </p>
               </div>
 
+              {/* Manufacturer */}
               <div className="space-y-2">
-                <Label htmlFor="manufacturer" className="flex items-center gap-2">
-                  <Factory className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="manufacturer" className="flex items-center gap-2 font-semibold text-gray-900">
+                  <Factory className="h-4 w-4 text-gray-600" />
                   Manufacturer{" "}
-                  <span className="text-muted-foreground text-xs">(Optional)</span>
+                  <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                 </Label>
                 <Input
                   id="manufacturer"
                   name="manufacturer"
                   value={formData.manufacturer}
                   onChange={handleChange}
-                  placeholder="Enter manufacturer name"
-                  className="h-11 border-2"
+                  placeholder="e.g., Square Pharmaceuticals"
+                  className="h-12 border-2 border-gray-200 rounded-xl"
                 />
               </div>
             </CardContent>
           </Card>
 
+          {/* Action Buttons */}
           <div className="flex items-center gap-4">
             <Button
               type="submit"
               disabled={isLoading}
-              className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg shadow-amber-500/25 font-semibold"
+              className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg font-semibold rounded-xl"
             >
               {isLoading ? (
                 <>
@@ -472,7 +499,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
             <Button
               type="button"
               variant="outline"
-              className="h-12 px-6 border-2"
+              className="h-12 px-8 border-2 rounded-xl hover:bg-gray-50"
               asChild
             >
               <Link href="/seller-dashboard/products">

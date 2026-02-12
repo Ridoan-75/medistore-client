@@ -55,6 +55,8 @@ import {
   FileText,
   FolderOpen,
   AlertTriangle,
+  Layers,
+  CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -197,13 +199,13 @@ export default function AllCategoryPage() {
   if (loading) {
     return (
       <div className="p-6">
-        <Card className="border-2">
-          <CardContent className="py-16">
+        <Card className="border-2 border-gray-200 shadow-lg rounded-xl">
+          <CardContent className="py-20">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                <Loader2 className="h-8 w-8 text-primary animate-spin" />
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center border-2 border-purple-300">
+                <Loader2 className="h-10 w-10 text-purple-600 animate-spin" />
               </div>
-              <p className="text-muted-foreground font-medium">
+              <p className="text-gray-700 font-semibold text-lg">
                 Loading categories...
               </p>
             </div>
@@ -215,28 +217,43 @@ export default function AllCategoryPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <Card className="border-2 shadow-sm">
-        <CardHeader className="border-b bg-muted/30">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Stats Card */}
+      <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100/50 shadow-md">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
-                <Tag className="h-6 w-6 text-white" />
+              <div className="w-14 h-14 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Layers className="h-7 w-7 text-white" />
               </div>
               <div>
-                <CardTitle className="text-xl">All Categories</CardTitle>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {categoryCount} {categoryCount === 1 ? "category" : "categories"} total
-                </p>
+                <p className="text-sm font-medium text-purple-700">Total Categories</p>
+                <h3 className="text-3xl font-bold text-purple-900 mt-1">{categoryCount}</h3>
               </div>
             </div>
-
             <Button
               onClick={openAddDialog}
-              className="bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg shadow-primary/25"
+              className="h-11 px-5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg rounded-xl font-semibold"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add Category
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Categories Table */}
+      <Card className="border-2 border-gray-200 shadow-lg rounded-xl overflow-hidden">
+        <CardHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100/50 px-6 py-5">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center shadow-lg">
+              <Tag className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-xl font-bold text-gray-900">All Categories</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Manage product categories
+              </p>
+            </div>
           </div>
         </CardHeader>
 
@@ -244,36 +261,36 @@ export default function AllCategoryPage() {
           {categoryCount > 0 ? (
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="font-semibold">Name</TableHead>
-                  <TableHead className="font-semibold">Description</TableHead>
-                  <TableHead className="font-semibold">Image</TableHead>
-                  <TableHead className="text-right font-semibold">Actions</TableHead>
+                <TableRow className="bg-gray-50 hover:bg-gray-50 border-b-2">
+                  <TableHead className="font-bold text-gray-900">Category</TableHead>
+                  <TableHead className="font-bold text-gray-900">Description</TableHead>
+                  <TableHead className="font-bold text-gray-900">Image</TableHead>
+                  <TableHead className="text-right font-bold text-gray-900">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {categories.map((category) => (
-                  <TableRow key={category.id} className="hover:bg-muted/30">
+                  <TableRow key={category.id} className="hover:bg-purple-50/50 transition-colors border-b">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                          <Tag className="h-4 w-4 text-primary" />
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                          <Tag className="h-5 w-5 text-white" />
                         </div>
-                        <span className="font-semibold text-foreground">
+                        <span className="font-bold text-gray-900">
                           {category.name}
                         </span>
                       </div>
                     </TableCell>
 
                     <TableCell>
-                      <p className="text-muted-foreground line-clamp-2 max-w-xs">
+                      <p className="text-gray-700 line-clamp-2 max-w-md leading-relaxed">
                         {category.description}
                       </p>
                     </TableCell>
 
                     <TableCell>
                       {category.imageUrl ? (
-                        <div className="relative w-12 h-12 rounded-lg overflow-hidden border-2 border-border">
+                        <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-50 shadow-sm">
                           <Image
                             src={category.imageUrl}
                             alt={category.name}
@@ -282,8 +299,8 @@ export default function AllCategoryPage() {
                           />
                         </div>
                       ) : (
-                        <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-border">
-                          <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                        <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
+                          <ImageIcon className="h-7 w-7 text-gray-400" />
                         </div>
                       )}
                     </TableCell>
@@ -294,7 +311,7 @@ export default function AllCategoryPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => openEditDialog(category)}
-                          className="h-9 w-9 p-0 border-2 hover:border-primary/50 hover:bg-primary/5"
+                          className="h-10 w-10 p-0 border-2 border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300 rounded-xl"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -302,7 +319,7 @@ export default function AllCategoryPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => openDeleteDialog(category)}
-                          className="h-9 w-9 p-0 border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive"
+                          className="h-10 w-10 p-0 border-2 border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 rounded-xl"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -313,17 +330,20 @@ export default function AllCategoryPage() {
               </TableBody>
             </Table>
           ) : (
-            <div className="py-16 text-center">
-              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
-                <FolderOpen className="h-10 w-10 text-muted-foreground" />
+            <div className="py-20 text-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6 border-2 border-gray-300">
+                <FolderOpen className="h-12 w-12 text-gray-600" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
                 No Categories Found
               </h3>
-              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+              <p className="text-gray-600 mb-6 max-w-sm mx-auto">
                 Get started by creating your first category to organize products.
               </p>
-              <Button onClick={openAddDialog}>
+              <Button 
+                onClick={openAddDialog}
+                className="h-11 px-6 bg-gradient-to-r from-purple-600 to-purple-700 shadow-lg rounded-xl"
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Create First Category
               </Button>
@@ -332,80 +352,81 @@ export default function AllCategoryPage() {
         </CardContent>
       </Card>
 
+      {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg rounded-2xl border-2">
           <DialogHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Plus className="h-5 w-5 text-primary" />
+            <div className="flex items-center gap-4 mb-3">
+              <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center border-2 border-purple-300">
+                <Plus className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <DialogTitle>Add New Category</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-xl font-bold text-gray-900">Add New Category</DialogTitle>
+                <DialogDescription className="text-gray-600 mt-1">
                   Create a new category for your products.
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-5 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted-foreground" />
-                Name <span className="text-destructive">*</span>
+              <Label htmlFor="name" className="flex items-center gap-2 font-semibold text-gray-900">
+                <Tag className="h-4 w-4 text-gray-600" />
+                Category Name <span className="text-red-600">*</span>
               </Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => updateFormField("name", e.target.value)}
-                placeholder="Enter category name"
-                className="h-11 border-2"
+                placeholder="e.g., Pain Relief, Vitamins"
+                className="h-12 border-2 border-gray-200 rounded-xl focus:border-purple-500"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description" className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                Description <span className="text-destructive">*</span>
+              <Label htmlFor="description" className="flex items-center gap-2 font-semibold text-gray-900">
+                <FileText className="h-4 w-4 text-gray-600" />
+                Description <span className="text-red-600">*</span>
               </Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => updateFormField("description", e.target.value)}
-                placeholder="Enter category description"
+                placeholder="Describe the category..."
                 rows={4}
-                className="border-2 resize-none"
+                className="border-2 border-gray-200 rounded-xl resize-none focus:border-purple-500"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="imageUrl" className="flex items-center gap-2">
-                <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                Image URL <span className="text-muted-foreground text-xs">(Optional)</span>
+              <Label htmlFor="imageUrl" className="flex items-center gap-2 font-semibold text-gray-900">
+                <ImageIcon className="h-4 w-4 text-gray-600" />
+                Image URL <span className="text-gray-500 text-xs font-normal">(Optional)</span>
               </Label>
               <Input
                 id="imageUrl"
                 value={formData.imageUrl}
                 onChange={(e) => updateFormField("imageUrl", e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="h-11 border-2"
+                placeholder="https://example.com/category-image.jpg"
+                className="h-12 border-2 border-gray-200 rounded-xl"
               />
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-3">
             <Button
               variant="outline"
               onClick={() => setIsAddDialogOpen(false)}
               disabled={submitting}
-              className="border-2"
+              className="h-11 px-6 border-2 rounded-xl"
             >
               Cancel
             </Button>
             <Button
               onClick={handleAddCategory}
               disabled={submitting}
-              className="bg-gradient-to-r from-primary to-primary/80"
+              className="h-11 px-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-xl font-semibold shadow-lg"
             >
               {submitting ? (
                 <>
@@ -414,7 +435,7 @@ export default function AllCategoryPage() {
                 </>
               ) : (
                 <>
-                  <Plus className="mr-2 h-4 w-4" />
+                  <CheckCircle className="mr-2 h-4 w-4" />
                   Create Category
                 </>
               )}
@@ -423,41 +444,42 @@ export default function AllCategoryPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg rounded-2xl border-2">
           <DialogHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center">
-                <Pencil className="h-5 w-5 text-amber-600" />
+            <div className="flex items-center gap-4 mb-3">
+              <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center border-2 border-amber-300">
+                <Pencil className="h-6 w-6 text-amber-600" />
               </div>
               <div>
-                <DialogTitle>Edit Category</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-xl font-bold text-gray-900">Edit Category</DialogTitle>
+                <DialogDescription className="text-gray-600 mt-1">
                   Update the category information.
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-5 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name" className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted-foreground" />
-                Name <span className="text-destructive">*</span>
+              <Label htmlFor="edit-name" className="flex items-center gap-2 font-semibold text-gray-900">
+                <Tag className="h-4 w-4 text-gray-600" />
+                Category Name <span className="text-red-600">*</span>
               </Label>
               <Input
                 id="edit-name"
                 value={formData.name}
                 onChange={(e) => updateFormField("name", e.target.value)}
                 placeholder="Enter category name"
-                className="h-11 border-2"
+                className="h-12 border-2 border-gray-200 rounded-xl focus:border-amber-500"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-description" className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                Description <span className="text-destructive">*</span>
+              <Label htmlFor="edit-description" className="flex items-center gap-2 font-semibold text-gray-900">
+                <FileText className="h-4 w-4 text-gray-600" />
+                Description <span className="text-red-600">*</span>
               </Label>
               <Textarea
                 id="edit-description"
@@ -465,38 +487,38 @@ export default function AllCategoryPage() {
                 onChange={(e) => updateFormField("description", e.target.value)}
                 placeholder="Enter category description"
                 rows={4}
-                className="border-2 resize-none"
+                className="border-2 border-gray-200 rounded-xl resize-none focus:border-amber-500"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-imageUrl" className="flex items-center gap-2">
-                <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                Image URL <span className="text-muted-foreground text-xs">(Optional)</span>
+              <Label htmlFor="edit-imageUrl" className="flex items-center gap-2 font-semibold text-gray-900">
+                <ImageIcon className="h-4 w-4 text-gray-600" />
+                Image URL <span className="text-gray-500 text-xs font-normal">(Optional)</span>
               </Label>
               <Input
                 id="edit-imageUrl"
                 value={formData.imageUrl}
                 onChange={(e) => updateFormField("imageUrl", e.target.value)}
                 placeholder="https://example.com/image.jpg"
-                className="h-11 border-2"
+                className="h-12 border-2 border-gray-200 rounded-xl"
               />
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-3">
             <Button
               variant="outline"
               onClick={() => setIsEditDialogOpen(false)}
               disabled={submitting}
-              className="border-2"
+              className="h-11 px-6 border-2 rounded-xl"
             >
               Cancel
             </Button>
             <Button
               onClick={handleEditCategory}
               disabled={submitting}
-              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
+              className="h-11 px-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 rounded-xl font-semibold shadow-lg"
             >
               {submitting ? (
                 <>
@@ -505,7 +527,7 @@ export default function AllCategoryPage() {
                 </>
               ) : (
                 <>
-                  <Pencil className="mr-2 h-4 w-4" />
+                  <CheckCircle className="mr-2 h-4 w-4" />
                   Update Category
                 </>
               )}
@@ -514,16 +536,17 @@ export default function AllCategoryPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Delete Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border-2">
           <AlertDialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center">
-                <AlertTriangle className="h-6 w-6 text-destructive" />
+            <div className="flex items-center gap-4 mb-3">
+              <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center border-2 border-red-300">
+                <AlertTriangle className="h-7 w-7 text-red-600" />
               </div>
               <div>
-                <AlertDialogTitle>Delete Category</AlertDialogTitle>
-                <AlertDialogDescription className="mt-1">
+                <AlertDialogTitle className="text-xl font-bold text-gray-900">Delete Category</AlertDialogTitle>
+                <AlertDialogDescription className="text-gray-600 mt-1">
                   Are you sure you want to delete this category?
                 </AlertDialogDescription>
               </div>
@@ -531,29 +554,29 @@ export default function AllCategoryPage() {
           </AlertDialogHeader>
 
           {selectedCategory && (
-            <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4 my-2">
-              <p className="font-semibold text-foreground">
+            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 my-3">
+              <p className="font-bold text-gray-900 text-lg">
                 {selectedCategory.name}
               </p>
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                 {selectedCategory.description}
               </p>
             </div>
           )}
 
-          <p className="text-sm text-muted-foreground">
-            This action cannot be undone. All products associated with this
+          <p className="text-sm text-gray-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <strong>Warning:</strong> This action cannot be undone. All products associated with this
             category may be affected.
           </p>
 
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel disabled={submitting} className="border-2">
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel disabled={submitting} className="h-11 px-6 border-2 rounded-xl">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteCategory}
               disabled={submitting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="h-11 px-6 bg-red-600 hover:bg-red-700 rounded-xl font-semibold shadow-lg"
             >
               {submitting ? (
                 <>

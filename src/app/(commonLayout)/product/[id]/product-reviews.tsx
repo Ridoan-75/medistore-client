@@ -12,6 +12,9 @@ import {
   LogIn,
   Send,
   User,
+  Sparkles,
+  TrendingUp,
+  Award,
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Textarea } from "@/src/components/ui/textarea";
@@ -178,45 +181,48 @@ export function ProductReviews({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {reviews.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-muted/50 rounded-xl border border-border">
-          <div className="text-center md:border-r border-border">
-            <div className="text-5xl font-bold text-foreground mb-2">
-              {averageRating.toFixed(1)}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 md:p-10 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-3xl border-2 border-amber-200/50 dark:border-amber-800/50">
+          <div className="text-center md:border-r-2 border-amber-200 dark:border-amber-800">
+            <div className="relative inline-block mb-4">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-400/30 to-orange-500/30 rounded-full blur-2xl animate-pulse" />
+              <div className="relative text-6xl md:text-7xl font-black bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 bg-clip-text text-transparent">
+                {averageRating.toFixed(1)}
+              </div>
             </div>
-            <div className="flex items-center justify-center gap-1 mb-2">
+            <div className="flex items-center justify-center gap-1.5 mb-3">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-5 w-5 ${
+                  className={`h-7 w-7 transition-all duration-300 ${
                     i < Math.round(averageRating)
-                      ? "fill-amber-400 text-amber-400"
-                      : "text-muted-foreground/30"
+                      ? "fill-amber-400 text-amber-400 scale-110"
+                      : "text-slate-300 dark:text-slate-700"
                   }`}
                 />
               ))}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-700 dark:text-slate-300 font-bold">
               Based on {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
             </p>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             {[5, 4, 3, 2, 1].map((star) => {
               const count = ratingStats[star as keyof typeof ratingStats];
               const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
 
               return (
-                <div key={star} className="flex items-center gap-3">
-                  <span className="text-sm font-medium w-8">{star} ★</span>
-                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <div key={star} className="flex items-center gap-4">
+                  <span className="text-sm font-black w-10 text-slate-700 dark:text-slate-300">{star} ★</span>
+                  <div className="flex-1 h-3 bg-white dark:bg-slate-800 rounded-full overflow-hidden border-2 border-amber-200 dark:border-amber-800">
                     <div
-                      className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400 rounded-full transition-all duration-500"
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground w-8">
+                  <span className="text-sm text-slate-600 dark:text-slate-400 font-bold w-10 text-right">
                     {count}
                   </span>
                 </div>
@@ -227,24 +233,24 @@ export function ProductReviews({
       )}
 
       {isLoggedIn && !hasReviewed && (
-        <div className="bg-card border border-border rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-              <MessageSquare className="h-5 w-5 text-primary" />
+        <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-8 md:p-10 shadow-xl">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-600 rounded-2xl flex items-center justify-center shadow-xl">
+              <MessageSquare className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Write a Review</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="font-black text-slate-900 dark:text-white text-xl">Write a Review</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 font-semibold">
                 Share your experience with this product
               </p>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-3">
-              <Label>Your Rating</Label>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-4">
+              <Label className="text-base font-black text-slate-900 dark:text-white">Your Rating</Label>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div className="flex items-center gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
@@ -252,13 +258,13 @@ export function ProductReviews({
                       onClick={() => setRating(star)}
                       onMouseEnter={() => setHoverRating(star)}
                       onMouseLeave={() => setHoverRating(0)}
-                      className="p-1 transition-transform hover:scale-125 focus:outline-none"
+                      className="p-1 transition-all duration-300 hover:scale-125 focus:outline-none focus:scale-125"
                     >
                       <Star
-                        className={`h-8 w-8 transition-colors ${
+                        className={`h-10 w-10 md:h-12 md:w-12 transition-all duration-300 ${
                           star <= displayRating
-                            ? "fill-amber-400 text-amber-400"
-                            : "text-muted-foreground/40 hover:text-muted-foreground"
+                            ? "fill-amber-400 text-amber-400 scale-110"
+                            : "text-slate-300 dark:text-slate-700 hover:text-amber-300 dark:hover:text-amber-600"
                         }`}
                       />
                     </button>
@@ -266,24 +272,27 @@ export function ProductReviews({
                 </div>
 
                 {displayRating > 0 && (
-                  <span className="text-sm font-medium text-amber-600 dark:text-amber-400 px-3 py-1 bg-amber-500/10 rounded-full">
-                    {RATING_LABELS[displayRating]}
-                  </span>
+                  <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl border border-amber-500/30">
+                    <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <span className="text-base font-black text-amber-700 dark:text-amber-300">
+                      {RATING_LABELS[displayRating]}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label htmlFor="comment">Your Review</Label>
+            <div className="space-y-4">
+              <Label htmlFor="comment" className="text-base font-black text-slate-900 dark:text-white">Your Review</Label>
               <Textarea
                 id="comment"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="What did you like or dislike about this product? How was your experience?"
-                rows={4}
-                className="resize-none"
+                rows={6}
+                className="resize-none border-2 rounded-2xl text-base"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-slate-600 dark:text-slate-400 font-semibold">
                 {comment.length}/500 characters
               </p>
             </div>
@@ -291,16 +300,16 @@ export function ProductReviews({
             <Button
               type="submit"
               disabled={isSubmitting || rating === 0 || !comment.trim()}
-              className="bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg shadow-primary/25"
+              className="w-full sm:w-auto bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-2xl shadow-amber-500/30 font-black text-base h-14 px-10 rounded-2xl transition-all duration-300 hover:scale-105"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Submitting...
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Submitting Review...
                 </>
               ) : (
                 <>
-                  <Send className="h-4 w-4 mr-2" />
+                  <Send className="h-5 w-5 mr-2" />
                   Submit Review
                 </>
               )}
@@ -310,15 +319,18 @@ export function ProductReviews({
       )}
 
       {isLoggedIn && hasReviewed && (
-        <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-6 flex items-center gap-4">
-          <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center shrink-0">
-            <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-3xl p-8 flex items-center gap-6 shadow-xl">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/30 to-teal-500/30 rounded-full blur-2xl animate-pulse" />
+            <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full flex items-center justify-center shadow-2xl">
+              <CheckCircle className="h-8 w-8 text-white" />
+            </div>
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">
+            <h3 className="font-black text-slate-900 dark:text-white text-xl mb-1">
               Thank you for your review!
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-700 dark:text-slate-300 font-semibold">
               Your feedback helps other customers make informed decisions.
             </p>
           </div>
@@ -326,65 +338,74 @@ export function ProductReviews({
       )}
 
       {!isLoggedIn && (
-        <div className="bg-card border-2 border-dashed border-border rounded-xl p-8 text-center">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <LogIn className="h-8 w-8 text-primary" />
+        <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-12 text-center shadow-xl">
+          <div className="relative inline-block mb-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-sky-500/30 to-indigo-500/30 rounded-full blur-2xl animate-pulse" />
+            <div className="relative w-20 h-20 bg-gradient-to-br from-sky-400 to-indigo-600 rounded-full flex items-center justify-center shadow-2xl">
+              <LogIn className="h-10 w-10 text-white" />
+            </div>
           </div>
-          <h3 className="font-semibold text-foreground mb-2">
+          <h3 className="font-black text-slate-900 dark:text-white text-2xl mb-3">
             Login to Write a Review
           </h3>
-          <p className="text-muted-foreground text-sm mb-4">
+          <p className="text-slate-600 dark:text-slate-400 mb-8 font-medium max-w-md mx-auto">
             Share your experience and help others make better decisions.
           </p>
-          <Button asChild variant="outline" className="border-2">
+          <Button asChild className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white shadow-2xl shadow-sky-500/30 font-black h-14 px-10 rounded-2xl">
             <Link href="/login">
-              <LogIn className="h-4 w-4 mr-2" />
+              <LogIn className="h-5 w-5 mr-2" />
               Login Now
             </Link>
           </Button>
         </div>
       )}
 
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-foreground">
+      <div className="space-y-8">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-violet-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Award className="h-6 w-6 text-white" />
+          </div>
+          <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
             Customer Reviews
-            <span className="ml-2 text-base font-normal text-muted-foreground">
+            <span className="ml-3 text-lg font-semibold text-slate-600 dark:text-slate-400">
               ({reviews.length})
             </span>
           </h3>
         </div>
 
         {reviews.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-border rounded-xl">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <MessageSquare className="h-8 w-8 text-muted-foreground" />
+          <div className="text-center py-16 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl">
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-400/30 to-slate-500/30 rounded-full blur-2xl animate-pulse" />
+              <div className="relative w-20 h-20 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 rounded-full flex items-center justify-center shadow-xl">
+                <MessageSquare className="h-10 w-10 text-slate-600 dark:text-slate-400" />
+              </div>
             </div>
-            <h4 className="font-semibold text-foreground mb-2">No Reviews Yet</h4>
-            <p className="text-muted-foreground text-sm">
+            <h4 className="font-black text-slate-900 dark:text-white text-xl mb-2">No Reviews Yet</h4>
+            <p className="text-slate-600 dark:text-slate-400 font-medium">
               Be the first to review this product!
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {reviews.map((review, index) => (
               <div
                 key={review.id || index}
-                className="bg-card border border-border rounded-xl p-5 hover:shadow-md hover:border-primary/20 transition-all"
+                className="group bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 hover:shadow-2xl hover:border-amber-500/50 transition-all duration-500 hover:-translate-y-1"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-6">
                   <div className="shrink-0">
                     {review.user?.image ? (
                       <Image
                         src={review.user.image}
                         alt={review.user.name}
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 rounded-full object-cover ring-2 ring-border"
+                        width={64}
+                        height={64}
+                        className="w-16 h-16 rounded-2xl object-cover ring-4 ring-slate-200 dark:ring-slate-800 shadow-lg"
                       />
                     ) : (
-                      <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-blue-500/20 rounded-full flex items-center justify-center ring-2 ring-border">
-                        <span className="font-bold text-primary">
+                      <div className="w-16 h-16 bg-gradient-to-br from-sky-400 to-indigo-600 rounded-2xl flex items-center justify-center ring-4 ring-slate-200 dark:ring-slate-800 shadow-lg">
+                        <span className="font-black text-white text-xl">
                           {getInitials(review.user?.name)}
                         </span>
                       </div>
@@ -392,40 +413,41 @@ export function ProductReviews({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-foreground">
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-3">
+                        <h4 className="font-black text-slate-900 dark:text-white text-lg">
                           {review.user?.name || "Anonymous"}
                         </h4>
-                        <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded-full">
-                          Verified Buyer
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-full border border-emerald-200 dark:border-emerald-800">
+                          <CheckCircle className="h-3 w-3" />
+                          Verified
                         </span>
                       </div>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-slate-600 dark:text-slate-400 font-semibold">
                         {formatRelativeDate(review.createdAt)}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="flex items-center gap-0.5">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-4 w-4 ${
+                            className={`h-5 w-5 ${
                               i < review.rating
                                 ? "fill-amber-400 text-amber-400"
-                                : "text-muted-foreground/30"
+                                : "text-slate-300 dark:text-slate-700"
                             }`}
                           />
                         ))}
                       </div>
-                      <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                      <span className="text-sm font-black text-amber-700 dark:text-amber-400 px-3 py-1 bg-amber-50 dark:bg-amber-950/30 rounded-full">
                         {RATING_LABELS[review.rating]}
                       </span>
                     </div>
 
                     {review.comment && (
-                      <p className="text-muted-foreground leading-relaxed">
+                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                         {review.comment}
                       </p>
                     )}

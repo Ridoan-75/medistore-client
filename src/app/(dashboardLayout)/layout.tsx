@@ -1,4 +1,7 @@
-import { ReactNode } from "react";
+"use client";
+
+import { ReactNode, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/src/components/layout/app-sidebar";
 import {
   SidebarInset,
@@ -6,12 +9,9 @@ import {
   SidebarTrigger,
 } from "@/src/components/ui/sidebar";
 import { Roles } from "@/src/constants/roles";
-import { userService } from "@/src/services/user.service";
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, Loader2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
-
-export const dynamic = "force-dynamic";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -41,12 +41,49 @@ const getRoleLabel = (role: string): string => {
   return "Dashboard";
 };
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   admin,
   seller,
 }: DashboardLayoutProps) {
-  const { data } = await userService.getSession();
-  const userInfo: UserInfo = data.user;
+  const router = useRouter();
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // ✅ Check localStorage for user
+    const storedUser = localStorage.getItem('medistore_user');
+    
+    if (!storedUser) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const user = JSON.parse(storedUser);
+      
+      // ✅ Check if user has dashboard access
+      if (user.role !== Roles.ADMIN && user.role !== Roles.SELLER) {
+        router.push('/');
+        return;
+      }
+
+      setUserInfo(user);
+    } catch (error) {
+      console.error("Failed to parse user data:", error);
+      router.push('/login');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router]);
+
+  // ✅ Show loader while checking
+  if (isLoading || !userInfo) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const isAdmin = userInfo.role === Roles.ADMIN;
   const greeting = getGreeting();

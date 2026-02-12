@@ -1,184 +1,193 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/src/components/ui/button";
-import {
-  ArrowRight,
-  Sparkles,
-  ShieldCheck,
-  Truck,
-  Clock,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-interface SideBanner {
-  image: string;
-  label: string;
+interface Slide {
+  id: number;
   title: string;
-  priceRange: string;
+  subtitle: string;
+  description: string;
+  buttonText: string;
   link: string;
-  gradient: string;
+  image: string;
 }
 
-interface TrustBadge {
-  icon: typeof ShieldCheck;
-  text: string;
-}
-
-const SIDE_BANNERS: SideBanner[] = [
+const SLIDES = [
   {
-    image: "/images/hero-medicine.jpg",
-    label: "Best Sellers",
-    title: "Medicine Products",
-    priceRange: "৳100 - ৳500",
-    link: "/shop?category=medicine",
-    gradient: "from-blue-600/80 to-blue-900/60",
+    id: 1,
+    title: "Your Prescription for",
+    subtitle: "Affordable Health Solutions!",
+    description: "Exclusive discounts and convenience. Every purchase is a prescription for savings.",
+    buttonText: "Start Shopping",
+    link: "/shop",
+    image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=800&h=1000&fit=crop&q=80"
   },
   {
-    image: "/images/hero-living.jpg",
-    label: "New Arrival",
-    title: "Healthcare Devices",
-    priceRange: "৳1,200 - ৳1,400",
-    link: "/shop?category=devices",
-    gradient: "from-purple-600/80 to-purple-900/60",
+    id: 2,
+    title: "Trusted Online",
+    subtitle: "Medicine Store",
+    description: "Get authentic medicines delivered fast at your doorstep with complete care.",
+    buttonText: "Explore Products",
+    link: "/shop",
+    image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=800&h=1000&fit=crop&q=80"
+  },
+  {
+    id: 3,
+    title: "Doctor Approved",
+    subtitle: "Healthcare Essentials",
+    description: "Shop medicines and wellness products with confidence and safety anytime.",
+    buttonText: "Order Now",
+    link: "/shop",
+    image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=800&h=1000&fit=crop&q=80"
+  },
+  {
+    id: 4,
+    title: "Fast Delivery",
+    subtitle: "Right at Your Door",
+    description: "Quick delivery with trusted packaging so your health stays protected.",
+    buttonText: "Shop Today",
+    link: "/shop",
+    image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&h=1000&fit=crop&q=80"
+  },
+  {
+    id: 5,
+    title: "Care & Support",
+    subtitle: "24/7 Assistance",
+    description: "Our support team is always ready to help you with your medical needs.",
+    buttonText: "Learn More",
+    link: "/about",
+    image: "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=800&h=1000&fit=crop&q=80"
   },
 ];
-
-const TRUST_BADGES: TrustBadge[] = [
-  { icon: ShieldCheck, text: "100% Authentic" },
-  { icon: Truck, text: "Free Delivery" },
-  { icon: Clock, text: "24/7 Support" },
-];
-
 export function Hero() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const nextSlide = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
+    setTimeout(() => setIsTransitioning(false), 500);
+  };
+
+  const prevSlide = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentSlide((prev) =>
+      prev === 0 ? SLIDES.length - 1 : prev - 1
+    );
+    setTimeout(() => setIsTransitioning(false), 500);
+  };
+
+  const goToSlide = (index: number) => {
+    if (isTransitioning || index === currentSlide) return;
+    setIsTransitioning(true);
+    setCurrentSlide(index);
+    setTimeout(() => setIsTransitioning(false), 500);
+  };
+
+  // Auto Slide
+  useEffect(() => {
+    const interval = setInterval(nextSlide, 6000);
+    return () => clearInterval(interval);
+  }, [currentSlide]);
+
+  const slide = SLIDES[currentSlide];
+
   return (
-    <section className="py-6 md:py-8 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] -z-10" />
+    <section className="w-full bg-gradient-to-br from-[#2d5f4f] to-[#1f4435] overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
+        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-r from-[#2f4b3b]/80 to-[#2f4b3b]/60 backdrop-blur-sm">
+          
+          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12 px-6 sm:px-10 lg:px-16 py-12 sm:py-16 lg:py-20 min-h-[500px] sm:min-h-[550px] lg:min-h-[600px]">
 
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-          <div className="lg:col-span-2 relative rounded-3xl overflow-hidden min-h-[400px] md:min-h-[500px] group">
-            <Image
-              src="/images/hero-thermometer.jpg"
-              alt="Digital Thermometer for Healthcare"
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-              priority
-              sizes="(max-width: 768px) 100vw, 66vw"
-            />
-
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-
-            <div className="absolute inset-0 flex flex-col justify-center p-6 md:p-10 lg:p-12">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 w-fit mb-4">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-white/90 text-sm font-medium">
-                  Home Medical Supplies
-                </span>
-              </div>
-
-              <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 max-w-xl leading-[1.1] tracking-tight">
-                Fast Reading{" "}
-                <span className="bg-gradient-to-r from-primary via-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  Digital Thermometer
-                </span>{" "}
-                for Ear & Forehead
+            {/* LEFT CONTENT */}
+            <div className="w-full lg:w-1/2 text-white space-y-4 sm:space-y-6 text-center lg:text-left z-10">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight">
+                {slide.title}
+                <br />
+                <span className="text-green-300">{slide.subtitle}</span>
               </h1>
 
-              <p className="text-white/80 text-base md:text-lg mb-6 max-w-md leading-relaxed">
-                Accurate temperature readings in seconds. FDA approved, safe for
-                all ages, and trusted by healthcare professionals.
+              <p className="text-white/90 max-w-md mx-auto lg:mx-0 text-base sm:text-lg leading-relaxed">
+                {slide.description}
               </p>
 
-              <div className="flex flex-wrap items-center gap-3 mb-8">
-                {TRUST_BADGES.map((badge) => {
-                  const Icon = badge.icon;
-                  return (
-                    <div
-                      key={badge.text}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full"
-                    >
-                      <Icon className="h-4 w-4 text-primary" />
-                      <span className="text-white/90 text-xs font-medium">
-                        {badge.text}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="flex flex-wrap gap-4">
+              <div className="pt-2">
                 <Button
                   asChild
                   size="lg"
-                  className="bg-gradient-to-r from-primary to-primary/80 hover:opacity-90 text-white shadow-lg shadow-primary/30 font-semibold text-base h-12 px-6"
+                  className="bg-white text-[#2d5f4f] hover:bg-green-50 px-6 sm:px-8 py-5 sm:py-6 rounded-xl font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
                 >
-                  <Link href="/shop">
-                    Shop Now
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-white/30 text-white hover:bg-white/10 font-semibold text-base h-12 px-6 backdrop-blur-sm"
-                >
-                  <Link href="/about">Learn More</Link>
+                  <Link href={slide.link}>{slide.buttonText}</Link>
                 </Button>
               </div>
             </div>
 
-            <div className="absolute bottom-6 right-6 hidden md:block">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-                <div className="text-3xl font-bold text-white mb-1">50K+</div>
-                <div className="text-white/70 text-sm">Happy Customers</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4 md:gap-6">
-            {SIDE_BANNERS.map((banner, index) => (
-              <Link
-                key={index}
-                href={banner.link}
-                className="relative rounded-2xl overflow-hidden flex-1 min-h-[200px] md:min-h-[240px] group"
-              >
+            {/* RIGHT IMAGE */}
+            <div className="w-full lg:w-1/2 flex justify-center lg:justify-end z-10">
+              <div className="relative w-[240px] h-[300px] sm:w-[280px] sm:h-[350px] md:w-[320px] md:h-[400px] lg:w-[380px] lg:h-[480px]">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-2xl blur-2xl"></div>
                 <Image
-                  src={banner.image}
-                  alt={banner.title}
+                  src={slide.image}
+                  alt={slide.title}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  sizes="(max-width: 768px) 100vw, 33vw"
+                  priority
+                  sizes="(max-width: 768px) 280px, (max-width: 1024px) 320px, 380px"
+                  className="object-cover rounded-2xl shadow-2xl relative z-10 transition-opacity duration-500"
+                  unoptimized
                 />
-
-                <div
-                  className={`absolute inset-0 bg-gradient-to-t ${banner.gradient}`}
-                />
-
-                <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-6">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-full w-fit text-white/90 text-xs font-medium mb-2">
-                    <Sparkles className="h-3 w-3" />
-                    {banner.label}
-                  </span>
-
-                  <h3 className="text-xl md:text-2xl font-bold text-white mb-1 group-hover:text-primary transition-colors">
-                    {banner.title}
-                  </h3>
-
-                  <p className="text-white/80 text-sm mb-3">
-                    {banner.priceRange}
-                  </p>
-
-                  <div className="flex items-center gap-2 text-white font-semibold text-sm group-hover:text-primary transition-colors">
-                    Shop Now
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </div>
-                </div>
-              </Link>
-            ))}
+              </div>
+            </div>
           </div>
+
+          {/* BOTTOM CONTROLS */}
+          <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 sm:gap-4 z-20">
+
+            {/* Left Arrow */}
+            <button
+              onClick={prevSlide}
+              disabled={isTransitioning}
+              className="bg-white/20 hover:bg-white/30 disabled:opacity-50 p-2 sm:p-2.5 rounded-full transition-all backdrop-blur-sm"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="text-white w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            {/* Dots */}
+            <div className="flex gap-1.5 sm:gap-2">
+              {SLIDES.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  disabled={isTransitioning}
+                  className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
+                    index === currentSlide
+                      ? "w-6 sm:w-8 bg-green-400"
+                      : "w-1.5 sm:w-2 bg-white/40 hover:bg-white/60"
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Right Arrow */}
+            <button
+              onClick={nextSlide}
+              disabled={isTransitioning}
+              className="bg-white/20 hover:bg-white/30 disabled:opacity-50 p-2 sm:p-2.5 rounded-full transition-all backdrop-blur-sm"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="text-white w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          </div>
+
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
         </div>
       </div>
     </section>
