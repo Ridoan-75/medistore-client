@@ -6,8 +6,8 @@ import { Button } from "@/src/components/ui/button";
 import { useAppSelector, useAppDispatch } from "@/src/store/hooks";
 import { CartItemCard } from "@/src/components/cart/CartItemCard";
 import { CartSummary } from "@/src/components/cart/CartSummary";
-import { selectCartItems, clearCart, type CartItem } from "@/src/store/slices/cartSlice";
-
+import { selectCartItems, clearCart} from "@/src/store/slices/cartSlice";
+import { CartItem } from "@/src/types/cart.types";  
 interface EmptyCartFeature {
   title: string;
   description: string;
