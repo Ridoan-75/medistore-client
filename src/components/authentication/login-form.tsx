@@ -67,6 +67,9 @@ export function LoginForm() {
     e.preventDefault();
     setIsLoading(true);
 
+    console.log(formData.email)
+    console.log(formData.password)
+
     try {
       const { data, error } = await authClient.signIn.email({
         email: formData.email.trim(),
@@ -82,6 +85,8 @@ export function LoginForm() {
         setIsLoading(false);
         return;
       }
+
+      console.log("data", data)
 
       // ✅ SUCCESS - Get user data
       const user = data?.user as UserWithRole;
@@ -103,13 +108,9 @@ export function LoginForm() {
         description: `Logged in as ${user?.name || user?.email}`,
       });
 
-      // ✅ ALWAYS redirect to home page (regardless of role)
-      router.push("/");
-
-      // ✅ Small delay then reload to update header
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      if(user){
+        router.push("/")
+      }
       
     } catch (error) {
       console.error("Login error:", error);
