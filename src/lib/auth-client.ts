@@ -3,26 +3,14 @@ import { inferAdditionalFields } from "better-auth/client/plugins";
 import { env } from "./../env";
 
 export const authClient = createAuthClient({
-  baseURL: `${env.NEXT_PUBLIC_BACKEND_URL}/`,
+  baseURL: env.NEXT_PUBLIC_BACKEND_URL, // No trailing slash
   plugins: [
     inferAdditionalFields({
       user: {
-        role: {
-          type: "string",
-          required: false,
-        },
-        phone: {
-          type: "string",
-          required: false,
-        },
-        address: {
-          type: "string",
-          required: false,
-        },
-        status: {
-          type: "string",
-          required: false,
-        },
+        role: { type: "string", required: false },
+        phone: { type: "string", required: false },
+        address: { type: "string", required: false },
+        status: { type: "string", required: false },
       },
     }),
   ],
