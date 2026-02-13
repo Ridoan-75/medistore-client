@@ -231,7 +231,7 @@ export default async function CustomerOrdersPage() {
 
                           <TableCell className="text-right">
                             <span className="font-black text-teal-600 dark:text-teal-400 text-lg">
-                              {formatCurrency(order.totalAmount)}
+                              {formatCurrency(parseFloat(order.totalAmount))}
                             </span>
                           </TableCell>
                         </TableRow>
