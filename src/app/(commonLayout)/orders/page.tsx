@@ -72,8 +72,9 @@ const formatOrderId = (id: string): string => {
   return `#${id.slice(0, 8).toUpperCase()}`;
 };
 
-const formatCurrency = (amount: number): string => {
-  return `৳${amount.toLocaleString()}`;
+const formatCurrency = (amount: number | string): string => {
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return `৳${numAmount.toLocaleString()}`;
 };
 
 export default async function CustomerOrdersPage() {

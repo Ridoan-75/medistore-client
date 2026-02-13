@@ -84,10 +84,6 @@ export default function AllCategoryPage() {
 
   const categoryCount = categories.length;
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
   const fetchCategories = async () => {
     setLoading(true);
     const { data, error } = await getAllCategoriesAction();
@@ -100,6 +96,10 @@ export default function AllCategoryPage() {
 
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const resetForm = () => {
     setFormData(INITIAL_FORM_DATA);

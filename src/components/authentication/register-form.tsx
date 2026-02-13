@@ -46,6 +46,14 @@ interface RegisterFormData {
   role: UserRole;
 }
 
+// Extended type for signup that includes role
+interface SignUpParams {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
 interface RoleOption {
   value: UserRole;
   label: string;
@@ -105,12 +113,15 @@ export function RegisterForm() {
     setIsLoading(true);
 
     try {
-      const { error } = await authClient.signUp.email({
+      // Type assertion to allow role property
+      const signUpData: SignUpParams = {
         name: formData.name.trim(),
         email: formData.email.trim(),
         password: formData.password,
         role: formData.role,
-      });
+      };
+      
+      const { error } = await authClient.signUp.email(signUpData as Parameters<typeof authClient.signUp.email>[0]);
 
       if (error) {
         toast({

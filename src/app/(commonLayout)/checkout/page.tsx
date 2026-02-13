@@ -77,6 +77,7 @@ export default function CheckoutPage() {
   const shipping = getShippingPrice(shippingLocation);
   const total = subtotal + shipping;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -337,7 +338,7 @@ export default function CheckoutPage() {
 
                   <RadioGroup
                     value={shippingLocation}
-                    onValueChange={(value: ShippingLocation) => setShippingLocation(value)}
+                    onValueChange={(value) => setShippingLocation(value as ShippingLocation)}
                     className="space-y-4"
                   >
                     {SHIPPING_OPTIONS.map((option) => (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import {
   Loader2,
@@ -90,7 +90,7 @@ export default function AllProductsPage() {
   const inStockCount = products.filter((p) => p.stock > 0).length;
   const outOfStockCount = products.filter((p) => p.stock === 0).length;
 
-  const fetchProducts = async (showRefreshToast = false) => {
+  const fetchProducts = useCallback(async (showRefreshToast = false) => {
     if (showRefreshToast) {
       setIsRefreshing(true);
     } else {
@@ -120,11 +120,11 @@ export default function AllProductsPage() {
 
     setIsLoading(false);
     setIsRefreshing(false);
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {

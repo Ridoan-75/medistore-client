@@ -35,9 +35,12 @@
   "devDependencies": {
     "@t3-oss/env-nextjs": "^0.13.10",
     "@tailwindcss/postcss": "^4",
+    "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^20",
+    "@types/parse-json": "^4.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-transition-group": "^4.4.12",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "shadcn": "^3.8.4",

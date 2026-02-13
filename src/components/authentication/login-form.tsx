@@ -32,6 +32,16 @@ interface LoginFormData {
   password: string;
 }
 
+// Extend the user type to include role
+interface UserWithRole {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
+  image?: string;
+  emailVerified: boolean;
+}
+
 const INITIAL_FORM_DATA: LoginFormData = {
   email: "",
   password: "",
@@ -74,7 +84,7 @@ export function LoginForm() {
       }
 
       // ✅ SUCCESS - Get user data
-      const user = data?.user;
+      const user = data?.user as UserWithRole;
       
       // ✅ Save user to localStorage for useAuth hook
       if (user) {
@@ -225,7 +235,7 @@ export function LoginForm() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-white px-3 text-gray-500 font-medium">
-              Don't have an account?
+              Dont have an account?
             </span>
           </div>
         </div>

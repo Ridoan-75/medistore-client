@@ -14,6 +14,8 @@ interface WishlistItem {
   price: number;
   originalPrice?: number;
   image: string;
+  stock: number;
+  manufacturer?: string;
 }
 
 interface EmptyWishlistFeature {
@@ -65,9 +67,11 @@ export default function WishlistPage() {
     dispatch(addToCart({
       id: item.id,
       name: item.name,
-      price: item.price.toString(),
+      price: item.price,
       imageUrl: item.image,
-      quantity: 1
+      quantity: 1,
+      stock: item.stock,
+      manufacturer: item.manufacturer,
     }));
     handleRemoveItem(item.id);
   };

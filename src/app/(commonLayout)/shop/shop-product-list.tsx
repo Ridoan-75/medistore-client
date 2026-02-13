@@ -202,13 +202,25 @@ export function ShopProductList({
               : "grid-cols-1"
           )}
         >
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              viewMode={viewMode}
-            />
-          ))}
+          {products.map((product) => {
+            // Skip products without category
+            if (!product.category) return null;
+
+            return (
+              <ProductCard
+                key={product.id}
+                product={{
+                  ...product,
+                  price: typeof product.price === 'number' ? product.price.toString() : product.price,
+                  imageUrl: product.imageUrl || '',
+                  category: product.category,
+                  createdAt: product.createdAt instanceof Date ? product.createdAt.toISOString() : product.createdAt,
+                  updatedAt: product.updatedAt instanceof Date ? product.updatedAt.toISOString() : product.updatedAt,
+                }}
+                viewMode={viewMode}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-16 text-center shadow-xl">

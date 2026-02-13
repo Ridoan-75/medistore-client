@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { trackOrderStatusAction } from "@/src/actions/order.action";
@@ -95,11 +95,13 @@ const getStatusBadgeVariant = (
 
 export default function OrderTrackPage() {
   const searchParams = useSearchParams();
+  const orderIdParam = searchParams.get("orderId");
 
-  const [orderId, setOrderId] = useState("");
+  const [orderId, setOrderId] = useState(orderIdParam || "");
   const [status, setStatus] = useState<OrderStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const hasLoadedInitial = useRef(false);
 
   const trackOrder = useCallback(async (id: string) => {
     if (!id.trim()) return;
@@ -120,12 +122,27 @@ export default function OrderTrackPage() {
   }, []);
 
   useEffect(() => {
-    const orderIdParam = searchParams.get("orderId");
-    if (orderIdParam) {
-      setOrderId(orderIdParam);
-      trackOrder(orderIdParam);
-    }
-  }, [searchParams, trackOrder]);
+    const loadInitialOrder = async () => {
+      if (!orderIdParam || hasLoadedInitial.current) return;
+      
+      hasLoadedInitial.current = true;
+      setLoading(true);
+      setError(null);
+      setStatus(null);
+
+      const result = await trackOrderStatusAction(orderIdParam.trim());
+
+      if (result.error) {
+        setError(result.error.message);
+      } else if (result.data) {
+        setStatus(result.data.status);
+      }
+
+      setLoading(false);
+    };
+
+    loadInitialOrder();
+  }, [orderIdParam]);
 
   const handleTrackOrder = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

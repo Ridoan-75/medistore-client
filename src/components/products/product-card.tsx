@@ -19,7 +19,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { useAppDispatch } from "@/src/store/hooks";
 import { addToCart } from "@/src/store/slices/cartSlice";
 import { useToast } from "@/src/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export interface Product {
   id: string;
@@ -49,6 +49,13 @@ interface ProductCardProps {
   viewMode?: "grid" | "list";
 }
 
+interface WishlistItem {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+}
+
 const NEW_PRODUCT_DAYS = 7;
 const LOW_STOCK_THRESHOLD = 20;
 
@@ -75,12 +82,12 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const isNew = isNewProduct(product.createdAt);
   const isAvailable = product.status === "AVAILABLE" && product.stock > 0;
 
-  // ✅ Check if product is in wishlist on mount
-  useEffect(() => {
+  // ✅ Check if product is in wishlist
+  const checkWishlistStatus = useCallback(() => {
     if (typeof window !== "undefined") {
       try {
-        const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
-        const exists = wishlist.some((item: any) => item.id === product.id);
+        const wishlist: WishlistItem[] = JSON.parse(localStorage.getItem("wishlist") || "[]");
+        const exists = wishlist.some((item: WishlistItem) => item.id === product.id);
         setIsWishlisted(exists);
       } catch (error) {
         console.error("Error loading wishlist:", error);
@@ -88,21 +95,20 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
     }
   }, [product.id]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    checkWishlistStatus();
+  }, [checkWishlistStatus]);
+
   // ✅ Listen for storage changes from other tabs/components
   useEffect(() => {
     const handleStorageChange = () => {
-      try {
-        const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
-        const exists = wishlist.some((item: any) => item.id === product.id);
-        setIsWishlisted(exists);
-      } catch (error) {
-        console.error("Error updating wishlist state:", error);
-      }
+      checkWishlistStatus();
     };
 
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, [product.id]);
+  }, [checkWishlistStatus]);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -137,11 +143,11 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
     e.stopPropagation();
 
     try {
-      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      const wishlist: WishlistItem[] = JSON.parse(localStorage.getItem("wishlist") || "[]");
 
       if (isWishlisted) {
         // ✅ Remove from wishlist
-        const filtered = wishlist.filter((item: any) => item.id !== product.id);
+        const filtered = wishlist.filter((item: WishlistItem) => item.id !== product.id);
         localStorage.setItem("wishlist", JSON.stringify(filtered));
         setIsWishlisted(false);
 
@@ -151,7 +157,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
         });
       } else {
         // ✅ Add to wishlist
-        const newItem = {
+        const newItem: WishlistItem = {
           id: product.id,
           name: product.name,
           price: priceNumber,

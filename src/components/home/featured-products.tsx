@@ -4,16 +4,26 @@ import { Button } from "@/src/components/ui/button";
 import { productService } from "@/src/services/product.service";
 import { ProductCard } from "../products/product-card";
 
+// Match the Product type expected by ProductCard
 interface Product {
   id: string;
   name: string;
-  price: number | string;
-  imageUrl?: string;
+  description: string;
+  price: string;
+  imageUrl: string;
   stock: number;
   status: string;
-  category?: {
+  categoryId: string;
+  sellerId: string;
+  createdAt: string;
+  updatedAt: string;
+  category: {
     id: string;
     name: string;
+    description: string;
+    imageUrl: string;
+    createdAt: string;
+    updatedAt: string;
   };
 }
 
