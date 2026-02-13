@@ -72,9 +72,8 @@ const formatOrderId = (id: string): string => {
   return `#${id.slice(0, 8).toUpperCase()}`;
 };
 
-const formatCurrency = (amount: number | string): string => {
-  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return `৳${numAmount.toLocaleString()}`;
+const formatCurrency = (amount: number): string => {
+  return `৳${amount.toLocaleString()}`;
 };
 
 export default async function CustomerOrdersPage() {
@@ -231,7 +230,7 @@ export default async function CustomerOrdersPage() {
 
                           <TableCell className="text-right">
                             <span className="font-black text-teal-600 dark:text-teal-400 text-lg">
-                              {formatCurrency(parseFloat(order.totalAmount))}
+                              {formatCurrency(typeof order.totalAmount === 'string' ? parseFloat(order.totalAmount) : order.totalAmount)}
                             </span>
                           </TableCell>
                         </TableRow>
@@ -345,7 +344,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
       <div className="flex items-center justify-between pt-6 border-t-2 border-slate-200 dark:border-slate-800">
         <span className="text-base text-slate-600 dark:text-slate-400 font-bold">Total Amount</span>
         <span className="text-2xl font-black text-teal-600 dark:text-teal-400">
-          {formatCurrency(order.totalAmount)}
+          {formatCurrency(typeof order.totalAmount === 'string' ? parseFloat(order.totalAmount) : order.totalAmount)}
         </span>
       </div>
     </div>
