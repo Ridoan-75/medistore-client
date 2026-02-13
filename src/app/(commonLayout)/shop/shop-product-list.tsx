@@ -36,11 +36,16 @@ interface PaginationMeta {
 interface Product {
   id: string;
   name: string;
+  description: string;
   price: number | string;
   imageUrl?: string;
   category?: Category;
+  categoryId: string;
   stock: number;
   status: string;
+  sellerId: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 interface ShopProductListProps {
@@ -98,7 +103,7 @@ export function ShopProductList({
     const halfVisible = Math.floor(MAX_VISIBLE_PAGES / 2);
 
     let start = Math.max(1, currentPage - halfVisible);
-    let end = Math.min(totalPages, start + MAX_VISIBLE_PAGES - 1);
+    const end = Math.min(totalPages, start + MAX_VISIBLE_PAGES - 1);
 
     if (end - start < MAX_VISIBLE_PAGES - 1) {
       start = Math.max(1, end - MAX_VISIBLE_PAGES + 1);

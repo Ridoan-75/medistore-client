@@ -28,27 +28,27 @@ const EMPTY_WISHLIST_FEATURES: EmptyWishlistFeature[] = [
 ];
 
 export default function WishlistPage() {
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>(() => {
+    // Initialize state from localStorage during first render
+    if (typeof window !== 'undefined') {
+      const savedWishlist = localStorage.getItem("wishlist");
+      if (savedWishlist) {
+        try {
+          return JSON.parse(savedWishlist);
+        } catch (error) {
+          console.error("Error loading wishlist:", error);
+        }
+      }
+    }
+    return [];
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const savedWishlist = localStorage.getItem("wishlist");
-    if (savedWishlist) {
-      try {
-        setWishlistItems(JSON.parse(savedWishlist));
-      } catch (error) {
-        console.error("Error loading wishlist:", error);
-      }
-    }
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem("wishlist", JSON.stringify(wishlistItems));
-    }
-  }, [wishlistItems, isLoading]);
+    // Only sync to localStorage when wishlistItems changes
+    localStorage.setItem("wishlist", JSON.stringify(wishlistItems));
+  }, [wishlistItems]);
 
   const itemCount = wishlistItems.length;
   const itemText = itemCount === 1 ? "Item" : "Items";
@@ -65,8 +65,8 @@ export default function WishlistPage() {
     dispatch(addToCart({
       id: item.id,
       name: item.name,
-      price: item.price,
-      image: item.image,
+      price: item.price.toString(),
+      imageUrl: item.image,
       quantity: 1
     }));
     handleRemoveItem(item.id);
