@@ -129,7 +129,16 @@ const formatCurrency = (amount: number): string => {
 };
 
 export default async function AllOrderPage() {
-  const { data: orders, error } = await getAllOrdersAction();
+  let orders: Order[] | null = null;
+  let error: { message: string } | null = null;
+
+  try {
+    const result = await getAllOrdersAction();
+    orders = result.data;
+    error = result.error;
+  } catch (err) {
+    error = { message: "Failed to load orders. Please try again." };
+  }
 
   const orderCount = orders?.length || 0;
   const totalRevenue = orders?.reduce((sum: number, o: Order) => sum + o.totalAmount, 0) || 0;
@@ -303,7 +312,7 @@ export default async function AllOrderPage() {
               </TableHeader>
 
               <TableBody>
-                {(orders as Order[]).map((order) => {
+                {orders.map((order) => {
                   const statusConfig = STATUS_CONFIG[order.status];
                   const StatusIcon = statusConfig.icon;
 
