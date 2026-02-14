@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft,
   Loader2,
@@ -17,6 +18,7 @@ import {
   Save,
   X,
   AlertCircle,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -76,6 +78,9 @@ export default function AddProductPage() {
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -142,6 +147,79 @@ export default function AddProductPage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Handle image file selection
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file",
+        description: "Please select a valid image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Image size should be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setImageFile(file);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Remove selected image
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    setFormData((prev) => ({ ...prev, imageUrl: "" }));
+  };
+
+  // Upload image to server
+  const uploadImage = async (file: File): Promise<string> => {
+    setUploading(true);
+    try {
+      // TODO: Implement your upload logic
+      const formData = new FormData();
+      formData.append('image', file);
+
+      // Example:
+      // const response = await fetch('/api/upload', {
+      //   method: 'POST',
+      //   body: formData,
+      // });
+      // const data = await response.json();
+      // return data.imageUrl;
+
+      toast({
+        title: "Info",
+        description: "Implement your image upload API endpoint",
+      });
+      return imagePreview;
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -149,33 +227,48 @@ export default function AddProductPage() {
 
     setIsLoading(true);
 
-    const { data, error } = await createProductAction({
-      name: formData.name.trim(),
-      description: formData.description.trim(),
-      price: parseFloat(formData.price),
-      stock: parseInt(formData.stock),
-      imageUrl: formData.imageUrl.trim() || undefined,
-      categoryId: formData.categoryId,
-      manufacturer: formData.manufacturer.trim() || undefined,
-    });
+    try {
+      let finalImageUrl = formData.imageUrl;
 
-    setIsLoading(false);
+      // If user selected a file, upload it
+      if (imageFile) {
+        finalImageUrl = await uploadImage(imageFile);
+      }
 
-    if (error) {
+      const { data, error } = await createProductAction({
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock),
+        imageUrl: finalImageUrl.trim() || undefined,
+        categoryId: formData.categoryId,
+        manufacturer: formData.manufacturer.trim() || undefined,
+      });
+
+      if (error) {
+        toast({
+          title: "Failed to create product",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data) {
+        toast({
+          title: "Product created",
+          description: `${formData.name} has been added successfully`,
+        });
+        router.push("/seller-dashboard/products");
+      }
+    } catch (error) {
       toast({
-        title: "Failed to create product",
-        description: error.message,
+        title: "Error",
+        description: "An error occurred while creating the product",
         variant: "destructive",
       });
-      return;
-    }
-
-    if (data) {
-      toast({
-        title: "Product created",
-        description: `${formData.name} has been added successfully`,
-      });
-      router.push("/seller-dashboard/products");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -202,7 +295,7 @@ export default function AddProductPage() {
     return `h-12 border-2 rounded-xl ${
       errors[fieldName]
         ? "border-red-300 focus-visible:ring-red-500"
-        : "border-gray-200 focus:border-blue-500"
+        : "border-gray-200 focus:border-emerald-500"
     }`;
   };
 
@@ -223,7 +316,7 @@ export default function AddProductPage() {
           </Button>
 
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
               <Plus className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -242,8 +335,8 @@ export default function AddProductPage() {
           <Card className="border-2 border-gray-200 shadow-lg rounded-xl">
             <CardHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100/50 px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center border-2 border-blue-200">
-                  <Package className="h-5 w-5 text-blue-600" />
+                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center border-2 border-emerald-200">
+                  <Package className="h-5 w-5 text-emerald-600" />
                 </div>
                 <CardTitle className="text-lg font-bold text-gray-900">
                   Product Information
@@ -290,7 +383,7 @@ export default function AddProductPage() {
                   className={`border-2 rounded-xl resize-none ${
                     errors.description
                       ? "border-red-300 focus-visible:ring-red-500"
-                      : "border-gray-200 focus:border-blue-500"
+                      : "border-gray-200 focus:border-emerald-500"
                   }`}
                 />
                 {errors.description && (
@@ -365,7 +458,7 @@ export default function AddProductPage() {
                 
                 {isFetchingCategories ? (
                   <div className="flex items-center gap-3 text-gray-600 h-12 px-4 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
-                    <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                    <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
                     <span className="text-sm font-medium">Loading categories...</span>
                   </div>
                 ) : categoryError ? (
@@ -399,7 +492,7 @@ export default function AddProductPage() {
                       className={`h-12 border-2 rounded-xl font-medium ${
                         errors.categoryId
                           ? "border-red-300"
-                          : "border-gray-200 focus:border-blue-500"
+                          : "border-gray-200 focus:border-emerald-500"
                       }`}
                     >
                       <SelectValue placeholder="Select a category" />
@@ -426,24 +519,73 @@ export default function AddProductPage() {
                 )}
               </div>
 
-              {/* Image URL */}
-              <div className="space-y-2">
-                <Label htmlFor="imageUrl" className="flex items-center gap-2 font-semibold text-gray-900">
+              {/* Image Upload */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2 font-semibold text-gray-900">
                   <ImageIcon className="h-4 w-4 text-gray-600" />
-                  Image URL{" "}
-                  <span className="text-gray-500 text-xs font-normal">(Optional)</span>
+                  Product Image <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                 </Label>
+
+                {imagePreview ? (
+                  <div className="relative">
+                    <div className="relative w-full h-48 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-50">
+                      <Image
+                        src={imagePreview}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={removeImage}
+                      className="absolute top-2 right-2 h-8 w-8 p-0 rounded-lg"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-emerald-500 transition-colors">
+                    <input
+                      type="file"
+                      id="image-upload"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="image-upload"
+                      className="cursor-pointer flex flex-col items-center gap-3"
+                    >
+                      <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <Upload className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Click to upload image</p>
+                        <p className="text-sm text-gray-500 mt-1">PNG, JPG, GIF up to 5MB</p>
+                      </div>
+                    </label>
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-500">
+                  Or paste an image URL below:
+                </p>
                 <Input
-                  id="imageUrl"
                   name="imageUrl"
                   value={formData.imageUrl}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (e.target.value) {
+                      setImagePreview(e.target.value);
+                      setImageFile(null);
+                    }
+                  }}
                   placeholder="https://example.com/product-image.jpg"
-                  className="h-12 border-2 border-gray-200 rounded-xl"
+                  className="h-11 border-2 border-gray-200 rounded-xl"
                 />
-                <p className="text-xs text-gray-600">
-                  Provide a direct URL to the product image
-                </p>
               </div>
 
               {/* Manufacturer */}
@@ -469,13 +611,13 @@ export default function AddProductPage() {
           <div className="flex items-center gap-4">
             <Button
               type="submit"
-              disabled={isLoading || isFetchingCategories || categories.length === 0}
-              className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg font-semibold rounded-xl"
+              disabled={isLoading || uploading || isFetchingCategories || categories.length === 0}
+              className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg font-semibold rounded-xl"
             >
-              {isLoading ? (
+              {isLoading || uploading ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  Creating Product...
+                  {uploading ? "Uploading..." : "Creating Product..."}
                 </>
               ) : (
                 <>

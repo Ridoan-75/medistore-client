@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
@@ -22,7 +23,6 @@ import {
   Loader2,
   ArrowRight,
   UserPlus,
-  Shield,
 } from "lucide-react";
 import { authClient } from "@/src/lib/auth-client";
 import { toast } from "../ui/use-toast";
@@ -32,7 +32,6 @@ interface LoginFormData {
   password: string;
 }
 
-// Extend the user type to include role
 interface UserWithRole {
   id: string;
   name: string;
@@ -54,6 +53,30 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check if user is not logged in and show toast
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const { data } = await authClient.getSession();
+        if (!data?.user) {
+          toast({
+            title: "You are not logged in",
+            description: "Please sign in to access your account and continue.",
+            variant: "default",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "You are not logged in",
+          description: "Please sign in to access your account and continue.",
+          variant: "default",
+        });
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -67,8 +90,8 @@ export function LoginForm() {
     e.preventDefault();
     setIsLoading(true);
 
-    console.log(formData.email)
-    console.log(formData.password)
+    console.log(formData.email);
+    console.log(formData.password);
 
     try {
       const { data, error } = await authClient.signIn.email({
@@ -86,12 +109,10 @@ export function LoginForm() {
         return;
       }
 
-      console.log("data", data)
+      console.log("data", data);
 
-      // ✅ SUCCESS - Get user data
       const user = data?.user as UserWithRole;
       
-      // ✅ Save user to localStorage for useAuth hook
       if (user) {
         localStorage.setItem('medistore_user', JSON.stringify({
           id: user.id,
@@ -101,6 +122,9 @@ export function LoginForm() {
           image: user.image,
           emailVerified: user.emailVerified,
         }));
+
+        // Dispatch custom event to trigger auth state update
+        window.dispatchEvent(new Event('auth-change'));
       }
       
       toast({
@@ -108,8 +132,12 @@ export function LoginForm() {
         description: `Logged in as ${user?.name || user?.email}`,
       });
 
-      if(user){
-        router.push("/")
+      if (user) {
+        // Small delay to ensure state is updated
+        setTimeout(() => {
+          router.push("/");
+          router.refresh();
+        }, 300);
       }
       
     } catch (error) {
@@ -128,8 +156,14 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md mx-auto border-2 shadow-xl rounded-2xl">
       <CardHeader className="text-center pb-4">
-        <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-          <Shield className="h-8 w-8 text-white" />
+        <div className="flex items-center justify-center mx-auto mb-4">
+          <Image 
+            src="/images/Logo.png" 
+            alt="MediStore Logo" 
+            width={120} 
+            height={120}
+            className="object-contain"
+          />
         </div>
 
         <CardTitle className="text-3xl font-bold text-gray-900">
@@ -167,21 +201,13 @@ export function LoginForm() {
 
           {/* Password Field */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label 
-                htmlFor="password" 
-                className="flex items-center gap-2 font-semibold text-gray-700"
-              >
-                <Lock className="h-4 w-4 text-green-600" />
-                Password
-              </Label>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-green-600 hover:text-green-700 hover:underline font-medium"
-              >
-                Forgot password?
-              </Link>
-            </div>
+            <Label 
+              htmlFor="password" 
+              className="flex items-center gap-2 font-semibold text-gray-700"
+            >
+              <Lock className="h-4 w-4 text-green-600" />
+              Password
+            </Label>
             <div className="relative">
               <Input
                 id="password"

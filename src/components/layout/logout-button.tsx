@@ -20,12 +20,23 @@ export function LogoutButton() {
     setIsLoggingOut(true);
     try {
       await authClient.signOut();
+      
+      // Remove user from localStorage
+      localStorage.removeItem('medistore_user');
+      
+      // Dispatch event to update auth state immediately
+      window.dispatchEvent(new Event('auth-change'));
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
       });
-      router.push("/");
+      
+      // Refresh and redirect
       router.refresh();
+      setTimeout(() => {
+        router.push("/");
+      }, 300);
     } catch (error) {
       console.error("Logout error:", error);
       toast({

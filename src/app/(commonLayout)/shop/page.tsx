@@ -36,41 +36,37 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const totalProducts = meta?.total || products.length;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <main className="flex-1">
-        {/* Page Header */}
-        <div className="bg-muted py-12">
-          <div className="container mx-auto px-4">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-              Shop
-            </h1>
-            <p className="text-muted-foreground">
-              Browse our wide selection of medical supplies and healthcare
-              products
-            </p>
-          </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Page Header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+            Shop
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            Browse our wide selection of medical supplies and healthcare products
+          </p>
         </div>
+      </div>
 
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar - Desktop only */}
-            <aside className="hidden lg:block w-64 shrink-0">
-              <div className="sticky top-4">
-                {/* ShopFilters = Client Component (filters UI) */}
-                <ShopFilters categories={categories} />
-              </div>
-            </aside>
-
-            {/* Main Content */}
-            <div className="flex-1">
-              {/* ShopProductList = Client Component (products grid) */}
-              <ShopProductList
-                products={products}
-                categories={categories}
-                meta={meta}
-                totalProducts={totalProducts}
-              />
+      {/* Main Content */}
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar - Desktop only */}
+          <aside className="hidden lg:block w-80 shrink-0">
+            <div className="sticky top-6">
+              <ShopFilters categories={categories} />
             </div>
+          </aside>
+
+          {/* Products Grid */}
+          <div className="flex-1 min-w-0">
+            <ShopProductList
+              products={products}
+              categories={categories}
+              meta={meta}
+              totalProducts={totalProducts}
+            />
           </div>
         </div>
       </main>
