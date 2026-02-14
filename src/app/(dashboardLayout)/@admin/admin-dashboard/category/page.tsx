@@ -84,22 +84,59 @@ export default function AllCategoryPage() {
 
   const categoryCount = categories.length;
 
-  const fetchCategories = async () => {
-    setLoading(true);
-    const { data, error } = await getAllCategoriesAction();
-
-    if (error) {
-      toast.error(error.message || "Failed to fetch categories");
-    } else {
-      setCategories(data || []);
-    }
-
-    setLoading(false);
-  };
-
+  // Fix: Move fetchCategories logic inside useEffect to avoid cascading renders
   useEffect(() => {
-    fetchCategories();
+    let isMounted = true;
+
+    const loadCategories = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await getAllCategoriesAction();
+
+        // Only update state if component is still mounted
+        if (isMounted) {
+          if (error) {
+            toast.error(error.message || "Failed to fetch categories");
+            setCategories([]);
+          } else {
+            setCategories(data || []);
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          toast.error("An unexpected error occurred");
+          setCategories([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCategories();
+
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  // Separate function for refetching (used after CRUD operations)
+  const refetchCategories = async () => {
+    try {
+      const { data, error } = await getAllCategoriesAction();
+
+      if (error) {
+        toast.error(error.message || "Failed to fetch categories");
+        return;
+      }
+
+      setCategories(data || []);
+    } catch (err) {
+      toast.error("An unexpected error occurred");
+    }
+  };
 
   const resetForm = () => {
     setFormData(INITIAL_FORM_DATA);
@@ -133,7 +170,7 @@ export default function AllCategoryPage() {
     toast.success("Category created successfully");
     setIsAddDialogOpen(false);
     resetForm();
-    fetchCategories();
+    refetchCategories();
   };
 
   const handleEditCategory = async () => {
@@ -151,7 +188,7 @@ export default function AllCategoryPage() {
     toast.success("Category updated successfully");
     setIsEditDialogOpen(false);
     resetForm();
-    fetchCategories();
+    refetchCategories();
   };
 
   const handleDeleteCategory = async () => {
@@ -169,7 +206,7 @@ export default function AllCategoryPage() {
     toast.success("Category deleted successfully");
     setIsDeleteDialogOpen(false);
     resetForm();
-    fetchCategories();
+    refetchCategories();
   };
 
   const openAddDialog = () => {
