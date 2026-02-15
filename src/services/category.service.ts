@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { env } from "./../env";
+
 const API_URL = env.API_URL;
 
 export interface Category {
@@ -11,15 +12,27 @@ export interface Category {
   updatedAt: string;
 }
 
+// ⭐ Helper function to get cookies
+async function getCookieHeader() {
+  const cookieStore = await cookies();
+  const allCookies = cookieStore.getAll();
+  
+  return allCookies
+    .map(cookie => `${cookie.name}=${cookie.value}`)
+    .join('; ');
+}
+
 export const categoryService = {
   getAllCategories: async () => {
     try {
-      const cookieStore = await cookies();
+      const cookieHeader = await getCookieHeader();
+      
       const res = await fetch(`${API_URL}/category`, {
-        // next: { tags: ["categories"] },
         headers: {
-          cookie: cookieStore.toString(),
+          'Cookie': cookieHeader,
+          'Content-Type': 'application/json',
         },
+        credentials: 'include', // ⭐ Important
         cache: "no-store",
       });
 

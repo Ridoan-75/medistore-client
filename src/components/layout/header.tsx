@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import { Search, Heart, ShoppingCart, User, Menu, X, Loader2, ShieldCheck, Store, LogOut, LayoutDashboard, UserCircle } from "lucide-react";
+import { Search, Heart, ShoppingCart, Menu, X, Loader2, ShieldCheck, Store, LogOut, LayoutDashboard, UserCircle } from "lucide-react";
 
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
@@ -38,28 +38,84 @@ export function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Check auth status
+  // Check auth status with localStorage fallback
   const checkAuthStatus = async () => {
-    setIsLoading(true);
     try {
-      const session = await authClient.getSession();
+      const { data } = await authClient.getSession();
       
-      // Check if session data exists and has user property
-      if (session && 'data' in session && session.data?.user) {
-        const userData = session.data.user as any;
-        setIsLoggedIn(true);
-        setUser({
+      if (data?.user) {
+        const userData = data.user as any;
+        const userInfo = {
           id: userData.id,
           email: userData.email,
           name: userData.name,
           role: userData.role || "CUSTOMER",
-        });
+        };
+        
+        setIsLoggedIn(true);
+        setUser(userInfo);
+        
+        // Update localStorage
+        localStorage.setItem('user-session', JSON.stringify({
+          ...userInfo,
+          timestamp: Date.now()
+        }));
       } else {
+        // ✅ FALLBACK: Check localStorage if API fails
+        const cachedSession = localStorage.getItem('user-session');
+        
+        if (cachedSession) {
+          try {
+            const parsed = JSON.parse(cachedSession);
+            const age = Date.now() - (parsed.timestamp || 0);
+            
+            // ✅ FIXED: Use cached data if less than 30 minutes old (was 5 min)
+            if (age < 30 * 60 * 1000) {
+              setIsLoggedIn(true);
+              setUser({
+                id: parsed.id,
+                email: parsed.email,
+                name: parsed.name,
+                role: parsed.role || "CUSTOMER",
+              });
+              return;
+            }
+          } catch (e) {
+            console.error("Failed to parse cached session:", e);
+          }
+        }
+        
+        // No valid session
         setIsLoggedIn(false);
         setUser(null);
+        localStorage.removeItem('user-session');
       }
     } catch (error) {
       console.error("Auth check error:", error);
+      
+      // ✅ FALLBACK: Try localStorage on error too
+      const cachedSession = localStorage.getItem('user-session');
+      if (cachedSession) {
+        try {
+          const parsed = JSON.parse(cachedSession);
+          const age = Date.now() - (parsed.timestamp || 0);
+          
+          // Check if cache is still valid
+          if (age < 30 * 60 * 1000) {
+            setIsLoggedIn(true);
+            setUser({
+              id: parsed.id,
+              email: parsed.email,
+              name: parsed.name,
+              role: parsed.role || "CUSTOMER",
+            });
+            return;
+          }
+        } catch (e) {
+          console.error("Fallback failed:", e);
+        }
+      }
+      
       setIsLoggedIn(false);
       setUser(null);
     } finally {
@@ -67,24 +123,46 @@ export function Header() {
     }
   };
 
-  // Initial auth check
+  // ✅ FIXED: Listen for auth changes + quick recheck on mount
   useEffect(() => {
+    // Initial check
     checkAuthStatus();
-  }, []);
 
-  // Listen for auth changes
-  useEffect(() => {
-    const handleAuthChange = async () => {
-      await checkAuthStatus();
-      router.refresh();
+    // ✅ NEW: Quick recheck after 500ms for post-login scenarios
+    const quickRecheck = setTimeout(() => {
+      checkAuthStatus();
+    }, 500);
+
+    // Listen for custom auth-changed event
+    const handleAuthChange = () => {
+      checkAuthStatus();
     };
 
-    window.addEventListener('auth-change', handleAuthChange);
-    
+    // Listen for visibility change (tab focus)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAuthStatus();
+      }
+    };
+
+    // Listen for storage changes (from other tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'user-session') {
+        checkAuthStatus();
+      }
+    };
+
+    window.addEventListener('auth-changed', handleAuthChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
-      window.removeEventListener('auth-change', handleAuthChange);
+      clearTimeout(quickRecheck); // ✅ NEW: Cleanup timeout
+      window.removeEventListener('auth-changed', handleAuthChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, [router]);
+  }, []);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -101,21 +179,28 @@ export function Header() {
     setIsLoggingOut(true);
     try {
       await authClient.signOut();
-      localStorage.removeItem('medistore_user');
       
-      // Dispatch event to update auth state immediately
-      window.dispatchEvent(new Event('auth-change'));
+      // Clear localStorage
+      localStorage.removeItem('user-session');
+      
+      // Update state immediately
+      setIsLoggedIn(false);
+      setUser(null);
       
       toast({
         title: "Logged out successfully",
         description: "See you again soon!",
       });
       
-      // Small delay to ensure state updates
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Dispatch event
+      window.dispatchEvent(new Event('auth-changed'));
       
       // Redirect
-      router.push("/");
+      setTimeout(() => {
+        router.push('/');
+        router.refresh();
+      }, 200);
+      
     } catch (error) {
       console.error("Logout error:", error);
       toast({
@@ -253,7 +338,25 @@ export function Header() {
                 {(user?.role === "ADMIN" || user?.role === "SELLER") && getDashboardLink() && (
                   <>
                     <DropdownMenuItem asChild>
-                      <Link href={getDashboardLink()!} className="cursor-pointer">
+                      <Link 
+                        href={getDashboardLink()!} 
+                        className="cursor-pointer"
+                        onClick={() => {
+                          // ✅ NEW: Refresh localStorage timestamp when clicking dashboard
+                          const cachedSession = localStorage.getItem('user-session');
+                          if (cachedSession) {
+                            try {
+                              const parsed = JSON.parse(cachedSession);
+                              localStorage.setItem('user-session', JSON.stringify({
+                                ...parsed,
+                                timestamp: Date.now() // Refresh timestamp
+                              }));
+                            } catch (e) {
+                              console.error("Failed to refresh session timestamp:", e);
+                            }
+                          }
+                        }}
+                      >
                         <LayoutDashboard className="h-4 w-4 mr-2" />
                         Dashboard
                       </Link>
@@ -435,7 +538,22 @@ export function Header() {
                   {(user?.role === "ADMIN" || user?.role === "SELLER") && getDashboardLink() && (
                     <Link 
                       href={getDashboardLink()!}
-                      onClick={() => setMenuOpen(false)}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        // ✅ NEW: Refresh localStorage timestamp
+                        const cachedSession = localStorage.getItem('user-session');
+                        if (cachedSession) {
+                          try {
+                            const parsed = JSON.parse(cachedSession);
+                            localStorage.setItem('user-session', JSON.stringify({
+                              ...parsed,
+                              timestamp: Date.now()
+                            }));
+                          } catch (e) {
+                            console.error("Failed to refresh session timestamp:", e);
+                          }
+                        }
+                      }}
                       className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors"
                     >
                       <LayoutDashboard className="h-5 w-5" />

@@ -3,7 +3,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { 
+  ArrowLeft, 
+  Loader2, 
+  Package, 
+  DollarSign, 
+  Box, 
+  Image as ImageIcon,
+  Building2,
+  Tag,
+  AlertCircle
+} from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Textarea } from "@/src/components/ui/textarea";
@@ -15,8 +26,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
-import { sellerProductService } from "@/src/services/seller.service";
-import { categoryService } from "@/src/services/category.service";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/card";
 import { useToast } from "@/src/hooks/use-toast";
 import { createProductAction } from "@/src/actions/seller.action";
 import { allCategoriesAction } from "@/src/actions/category.action";
@@ -89,7 +105,14 @@ export default function AddProductPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields correctly",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsLoading(true);
 
@@ -116,10 +139,11 @@ export default function AddProductPage() {
 
     if (data) {
       toast({
-        title: "Product created",
-        description: `${formData.name} has been added successfully`,
+        title: "Product created successfully",
+        description: `${formData.name} has been added to your inventory`,
       });
       router.push("/seller-dashboard/products");
+      router.refresh();
     }
   };
 
@@ -134,177 +158,282 @@ export default function AddProductPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/seller-dashboard/products">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="rounded-lg">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Add New Product
-          </h1>
-          <p className="text-muted-foreground">
-            Fill in the details to add a new product
+          <h1 className="text-3xl font-bold tracking-tight">Add New Product</h1>
+          <p className="text-muted-foreground mt-1">
+            Create a new product listing for your store
           </p>
         </div>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-card rounded-lg border border-border p-6 space-y-4">
-          {/* Product Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Product Name *</Label>
-            <Input
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter product name"
-              className={errors.name ? "border-destructive" : ""}
-            />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name}</p>
-            )}
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Enter product description"
-              rows={4}
-              className={errors.description ? "border-destructive" : ""}
-            />
-            {errors.description && (
-              <p className="text-sm text-destructive">{errors.description}</p>
-            )}
-          </div>
-
-          {/* Price & Stock */}
-          <div className="grid grid-cols-2 gap-4">
+        {/* Basic Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Basic Information
+            </CardTitle>
+            <CardDescription>
+              Essential details about your product
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Product Name */}
             <div className="space-y-2">
-              <Label htmlFor="price">Price (৳) *</Label>
+              <Label htmlFor="name" className="flex items-center gap-2">
+                <Tag className="h-4 w-4" />
+                Product Name <span className="text-destructive">*</span>
+              </Label>
               <Input
-                id="price"
-                name="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.price}
+                id="name"
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
-                placeholder="0.00"
-                className={errors.price ? "border-destructive" : ""}
+                placeholder="e.g., Paracetamol 500mg"
+                className={errors.name ? "border-destructive" : ""}
               />
-              {errors.price && (
-                <p className="text-sm text-destructive">{errors.price}</p>
+              {errors.name && (
+                <div className="flex items-center gap-1.5 text-sm text-destructive">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.name}
+                </div>
               )}
             </div>
 
+            {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="stock">Stock Quantity *</Label>
-              <Input
-                id="stock"
-                name="stock"
-                type="number"
-                min="0"
-                value={formData.stock}
+              <Label htmlFor="description">
+                Description <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
                 onChange={handleChange}
-                placeholder="0"
-                className={errors.stock ? "border-destructive" : ""}
+                placeholder="Describe your product, its uses, and benefits..."
+                rows={4}
+                className={errors.description ? "border-destructive" : ""}
               />
-              {errors.stock && (
-                <p className="text-sm text-destructive">{errors.stock}</p>
+              {errors.description && (
+                <div className="flex items-center gap-1.5 text-sm text-destructive">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.description}
+                </div>
               )}
             </div>
-          </div>
 
-          {/* Category */}
-          <div className="space-y-2">
-            <Label htmlFor="categoryId">Category *</Label>
-            {isFetchingCategories ? (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading categories...
+            {/* Manufacturer */}
+            <div className="space-y-2">
+              <Label htmlFor="manufacturer" className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Manufacturer
+              </Label>
+              <Input
+                id="manufacturer"
+                name="manufacturer"
+                value={formData.manufacturer}
+                onChange={handleChange}
+                placeholder="e.g., Square Pharmaceuticals"
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional: Name of the company that produces this product
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pricing & Inventory */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Pricing & Inventory
+            </CardTitle>
+            <CardDescription>
+              Set the price and stock quantity
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Price */}
+              <div className="space-y-2">
+                <Label htmlFor="price" className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Price (৳) <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.price}
+                  onChange={handleChange}
+                  placeholder="0.00"
+                  className={errors.price ? "border-destructive" : ""}
+                />
+                {errors.price && (
+                  <div className="flex items-center gap-1.5 text-sm text-destructive">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.price}
+                  </div>
+                )}
               </div>
-            ) : (
-              <Select
-                value={formData.categoryId}
-                onValueChange={(value) => {
-                  setFormData((prev) => ({ ...prev, categoryId: value }));
-                  if (errors.categoryId) {
-                    setErrors((prev) => ({ ...prev, categoryId: "" }));
-                  }
-                }}
-              >
-                <SelectTrigger
-                  className={errors.categoryId ? "border-destructive" : ""}
+
+              {/* Stock */}
+              <div className="space-y-2">
+                <Label htmlFor="stock" className="flex items-center gap-2">
+                  <Box className="h-4 w-4" />
+                  Stock Quantity <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="stock"
+                  name="stock"
+                  type="number"
+                  min="0"
+                  value={formData.stock}
+                  onChange={handleChange}
+                  placeholder="0"
+                  className={errors.stock ? "border-destructive" : ""}
+                />
+                {errors.stock && (
+                  <div className="flex items-center gap-1.5 text-sm text-destructive">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.stock}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Category & Media */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" />
+              Category & Media
+            </CardTitle>
+            <CardDescription>
+              Categorize your product and add an image
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Category */}
+            <div className="space-y-2">
+              <Label htmlFor="categoryId">
+                Category <span className="text-destructive">*</span>
+              </Label>
+              {isFetchingCategories ? (
+                <div className="flex items-center gap-2 text-muted-foreground py-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading categories...
+                </div>
+              ) : (
+                <Select
+                  value={formData.categoryId}
+                  onValueChange={(value) => {
+                    setFormData((prev) => ({ ...prev, categoryId: value }));
+                    if (errors.categoryId) {
+                      setErrors((prev) => ({ ...prev, categoryId: "" }));
+                    }
+                  }}
                 >
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {errors.categoryId && (
-              <p className="text-sm text-destructive">{errors.categoryId}</p>
-            )}
-          </div>
+                  <SelectTrigger
+                    className={errors.categoryId ? "border-destructive" : ""}
+                  >
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {errors.categoryId && (
+                <div className="flex items-center gap-1.5 text-sm text-destructive">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.categoryId}
+                </div>
+              )}
+            </div>
 
-          {/* Image URL */}
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input
-              id="imageUrl"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-            />
-            <p className="text-xs text-muted-foreground">
-              Enter a direct URL to the product image
-            </p>
-          </div>
-
-          {/* Manufacturer */}
-          <div className="space-y-2">
-            <Label htmlFor="manufacturer">Manufacturer</Label>
-            <Input
-              id="manufacturer"
-              name="manufacturer"
-              value={formData.manufacturer}
-              onChange={handleChange}
-              placeholder="Enter manufacturer name"
-            />
-          </div>
-        </div>
+            {/* Image URL */}
+            <div className="space-y-2">
+              <Label htmlFor="imageUrl" className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Product Image URL
+              </Label>
+              <Input
+                id="imageUrl"
+                name="imageUrl"
+                value={formData.imageUrl}
+                onChange={handleChange}
+                placeholder="https://example.com/image.jpg"
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional: Enter a direct URL to the product image
+              </p>
+              
+              {/* Image Preview */}
+              {formData.imageUrl && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium mb-2">Image Preview:</p>
+                  <div className="relative w-32 h-32 rounded-lg overflow-hidden border bg-muted">
+                    <Image
+                      src={formData.imageUrl}
+                      alt="Product preview"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Submit Buttons */}
         <div className="flex items-center gap-4">
-          <Button type="submit" className="flex-1" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="flex-1" 
+            disabled={isLoading}
+            size="lg"
+          >
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Creating...
+                Creating Product...
               </>
             ) : (
-              "Create Product"
+              <>
+                <Package className="h-4 w-4 mr-2" />
+                Create Product
+              </>
             )}
           </Button>
           <Link href="/seller-dashboard/products">
-            <Button type="button" variant="outline">
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="lg"
+              disabled={isLoading}
+            >
               Cancel
             </Button>
           </Link>

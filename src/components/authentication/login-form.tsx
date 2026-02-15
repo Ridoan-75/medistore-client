@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -32,15 +32,6 @@ interface LoginFormData {
   password: string;
 }
 
-interface UserWithRole {
-  id: string;
-  name: string;
-  email: string;
-  role?: string;
-  image?: string;
-  emailVerified: boolean;
-}
-
 const INITIAL_FORM_DATA: LoginFormData = {
   email: "",
   password: "",
@@ -52,30 +43,6 @@ export function LoginForm() {
   const [formData, setFormData] = useState<LoginFormData>(INITIAL_FORM_DATA);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Check if user is not logged in and show toast
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const { data } = await authClient.getSession();
-        if (!data?.user) {
-          toast({
-            title: "You are not logged in",
-            description: "Please sign in to access your account and continue.",
-            variant: "default",
-          });
-        }
-      } catch (error) {
-        toast({
-          title: "You are not logged in",
-          description: "Please sign in to access your account and continue.",
-          variant: "default",
-        });
-      }
-    };
-
-    checkLoginStatus();
-  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -89,9 +56,6 @@ export function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    console.log(formData.email);
-    console.log(formData.password);
 
     try {
       const { data, error } = await authClient.signIn.email({
@@ -109,36 +73,36 @@ export function LoginForm() {
         return;
       }
 
-      console.log("data", data);
-
-      const user = data?.user as UserWithRole;
-      
-      if (user) {
-        localStorage.setItem('medistore_user', JSON.stringify({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          image: user.image,
-          emailVerified: user.emailVerified,
-        }));
-
-        // Dispatch custom event to trigger auth state update
-        window.dispatchEvent(new Event('auth-change'));
-      }
-      
+      // Success toast
       toast({
         title: "Welcome back!",
-        description: `Logged in as ${user?.name || user?.email}`,
+        description: `Logged in as ${data?.user?.name || data?.user?.email}`,
       });
 
-      if (user) {
-        // Small delay to ensure state is updated
-        setTimeout(() => {
-          router.push("/");
-          router.refresh();
-        }, 300);
+      // ✅ FIXED: Multiple approaches to ensure state updates
+      
+      // 1. Dispatch custom event
+      window.dispatchEvent(new Event('auth-changed'));
+      
+      // 2. Store session data in localStorage as backup
+      if (data?.user) {
+        localStorage.setItem('user-session', JSON.stringify({
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: (data.user as any).role || 'CUSTOMER',
+          timestamp: Date.now()
+        }));
       }
+
+      // 3. Force session refresh before redirect
+      await authClient.getSession();
+      
+      // 4. Use router.push instead of window.location for better state management
+      setTimeout(() => {
+        router.push('/');
+        router.refresh(); // Force Next.js to revalidate
+      }, 300);
       
     } catch (error) {
       console.error("Login error:", error);
@@ -262,7 +226,7 @@ export function LoginForm() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-white px-3 text-gray-500 font-medium">
-              Dont have an account?
+              Don't have an account?
             </span>
           </div>
         </div>
