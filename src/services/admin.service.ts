@@ -32,28 +32,34 @@ export interface CreateCategoryPayload {
   imageUrl?: string;
 }
 
-// ⭐ Helper function to get cookies properly
 async function getCookieHeader() {
   const cookieStore = await cookies();
   const allCookies = cookieStore.getAll();
   
-  // Better-auth uses specific cookie names
+  if (allCookies.length === 0) {
+    console.warn('No cookies found');
+    return '';
+  }
+  
   const sessionCookie = allCookies.find(
-    c => c.name === 'better_auth.session_token' || c.name.includes('session')
+    c => c.name === 'better-auth.session_token' || 
+         c.name === 'better_auth.session_token' ||
+         c.name.includes('session')
   );
   
   if (!sessionCookie) {
     console.warn('No session cookie found');
+    console.log('Available cookies:', allCookies.map(c => c.name));
     return '';
   }
   
-  // Return all cookies as string
+  console.log('✅ Found session cookie:', sessionCookie.name);
+  
   return allCookies
     .map(cookie => `${cookie.name}=${cookie.value}`)
     .join('; ');
 }
 
-// ⭐ Helper function for authenticated fetch
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
   try {
     const cookieHeader = await getCookieHeader();
@@ -65,7 +71,6 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
         'Cookie': cookieHeader,
         ...options.headers,
       },
-      // ⭐ Important for server-side fetching
       credentials: 'include',
     });
 
@@ -287,21 +292,13 @@ export const adminService = {
 
   createCategory: async (payload: CreateCategoryPayload) => {
     try {
-      const cookieHeader = await getCookieHeader();
-      
-      console.log("Sending cookies:", cookieHeader);
-      console.log("Payload:", payload);
-
       const res = await fetchWithAuth(`${API_URL}/category`, {
         method: "POST",
         body: JSON.stringify(payload),
       });
 
-      console.log("Response status:", res.status);
-
       if (!res.ok) {
         const errorData = await res.json();
-        console.error("Error response:", errorData);
         return {
           data: null,
           error: { message: errorData.message || "Failed to create category" },
@@ -309,8 +306,6 @@ export const adminService = {
       }
 
       const response = await res.json();
-      console.log("Success response:", response);
-
       return {
         data: response.data,
         error: null,
