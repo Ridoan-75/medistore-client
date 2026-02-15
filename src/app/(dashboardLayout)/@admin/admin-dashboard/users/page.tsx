@@ -244,12 +244,6 @@ export default async function AllUsersPage() {
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="text-sm">{user.email}</span>
-                            {user.emailVerified && (
-                              <span className="text-xs text-green-600 flex items-center gap-1 mt-0.5">
-                                <UserCheck className="h-3 w-3" />
-                                Verified
-                              </span>
-                            )}
                           </div>
                         </TableCell>
 
