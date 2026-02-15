@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
+import React, { useState, useEffect } from "react";
 import {
   getAllCategoriesAction,
   deleteCategorybyIdAction,
@@ -45,32 +44,8 @@ import {
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { Textarea } from "@/src/components/ui/textarea";
-import {
-  Pencil,
-  Trash2,
-  Plus,
-  Loader2,
-  Tag,
-  ImageIcon,
-  FileText,
-  FolderOpen,
-  AlertTriangle,
-  Layers,
-  CheckCircle,
-} from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
-
-interface CategoryFormData {
-  name: string;
-  description: string;
-  imageUrl: string;
-}
-
-const INITIAL_FORM_DATA: CategoryFormData = {
-  name: "",
-  description: "",
-  imageUrl: "",
-};
 
 export default function AllCategoryPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -78,140 +53,90 @@ export default function AllCategoryPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [formData, setFormData] = useState<CategoryFormData>(INITIAL_FORM_DATA);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null,
+  );
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    imageUrl: "",
+  });
   const [submitting, setSubmitting] = useState(false);
 
-  const categoryCount = categories.length;
-
-  // Fix: Move fetchCategories logic inside useEffect to avoid cascading renders
   useEffect(() => {
-    let isMounted = true;
-
-    const loadCategories = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await getAllCategoriesAction();
-
-        // Only update state if component is still mounted
-        if (isMounted) {
-          if (error) {
-            toast.error(error.message || "Failed to fetch categories");
-            setCategories([]);
-          } else {
-            setCategories(data || []);
-          }
-        }
-      } catch (err) {
-        if (isMounted) {
-          toast.error("An unexpected error occurred");
-          setCategories([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadCategories();
-
-    // Cleanup function to prevent state updates on unmounted component
-    return () => {
-      isMounted = false;
-    };
+    fetchCategories();
   }, []);
 
-  // Separate function for refetching (used after CRUD operations)
-  const refetchCategories = async () => {
-    try {
-      const { data, error } = await getAllCategoriesAction();
-
-      if (error) {
-        toast.error(error.message || "Failed to fetch categories");
-        return;
-      }
-
+  const fetchCategories = async () => {
+    setLoading(true);
+    const { data, error } = await getAllCategoriesAction();
+    if (error) {
+      toast.error(error.message || "Failed to fetch categories");
+    } else {
       setCategories(data || []);
-    } catch (err) {
-      toast.error("An unexpected error occurred");
     }
-  };
-
-  const resetForm = () => {
-    setFormData(INITIAL_FORM_DATA);
-    setSelectedCategory(null);
-  };
-
-  const validateForm = (): boolean => {
-    if (!formData.name.trim()) {
-      toast.error("Category name is required");
-      return false;
-    }
-    if (!formData.description.trim()) {
-      toast.error("Category description is required");
-      return false;
-    }
-    return true;
+    setLoading(false);
   };
 
   const handleAddCategory = async () => {
-    if (!validateForm()) return;
+    if (!formData.name || !formData.description) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
 
     setSubmitting(true);
-    const { error } = await createCategoryAction(formData);
+    const { data, error } = await createCategoryAction(formData);
     setSubmitting(false);
 
     if (error) {
       toast.error(error.message || "Failed to create category");
-      return;
+    } else {
+      toast.success("Category created successfully");
+      setIsAddDialogOpen(false);
+      setFormData({ name: "", description: "", imageUrl: "" });
+      fetchCategories();
     }
-
-    toast.success("Category created successfully");
-    setIsAddDialogOpen(false);
-    resetForm();
-    refetchCategories();
   };
 
   const handleEditCategory = async () => {
-    if (!selectedCategory || !validateForm()) return;
+    if (!selectedCategory || !formData.name || !formData.description) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
 
     setSubmitting(true);
-    const { error } = await updateCategoryAction(selectedCategory.id, formData);
+    const { data, error } = await updateCategoryAction(
+      selectedCategory.id,
+      formData,
+    );
     setSubmitting(false);
 
     if (error) {
       toast.error(error.message || "Failed to update category");
-      return;
+    } else {
+      toast.success("Category updated successfully");
+      setIsEditDialogOpen(false);
+      setSelectedCategory(null);
+      setFormData({ name: "", description: "", imageUrl: "" });
+      fetchCategories();
     }
-
-    toast.success("Category updated successfully");
-    setIsEditDialogOpen(false);
-    resetForm();
-    refetchCategories();
   };
 
   const handleDeleteCategory = async () => {
     if (!selectedCategory) return;
 
     setSubmitting(true);
-    const { error } = await deleteCategorybyIdAction(selectedCategory.id);
+    const { data, error } = await deleteCategorybyIdAction(selectedCategory.id);
     setSubmitting(false);
 
     if (error) {
       toast.error(error.message || "Failed to delete category");
-      return;
+    } else {
+      toast.success("Category deleted successfully");
+      setIsDeleteDialogOpen(false);
+      setSelectedCategory(null);
+      fetchCategories();
     }
-
-    toast.success("Category deleted successfully");
-    setIsDeleteDialogOpen(false);
-    resetForm();
-    refetchCategories();
-  };
-
-  const openAddDialog = () => {
-    resetForm();
-    setIsAddDialogOpen(true);
   };
 
   const openEditDialog = (category: Category) => {
@@ -229,23 +154,19 @@ export default function AllCategoryPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const updateFormField = (field: keyof CategoryFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const openAddDialog = () => {
+    setFormData({ name: "", description: "", imageUrl: "" });
+    setIsAddDialogOpen(true);
   };
 
   if (loading) {
     return (
       <div className="p-6">
-        <Card className="border-2 border-gray-200 shadow-lg rounded-xl">
-          <CardContent className="py-20">
-            <div className="flex flex-col items-center justify-center gap-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center border-2 border-purple-300">
-                <Loader2 className="h-10 w-10 text-purple-600 animate-spin" />
-              </div>
-              <p className="text-gray-700 font-semibold text-lg">
-                Loading categories...
-              </p>
-            </div>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground">
+              Loading categories...
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -253,379 +174,228 @@ export default function AllCategoryPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Stats Card */}
-      <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100/50 shadow-md">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-                <Layers className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-purple-700">Total Categories</p>
-                <h3 className="text-3xl font-bold text-purple-900 mt-1">{categoryCount}</h3>
-              </div>
-            </div>
-            <Button
-              onClick={openAddDialog}
-              className="h-11 px-5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg rounded-xl font-semibold"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Category
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Categories Table */}
-      <Card className="border-2 border-gray-200 shadow-lg rounded-xl overflow-hidden">
-        <CardHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100/50 px-6 py-5">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center shadow-lg">
-              <Tag className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-xl font-bold text-gray-900">All Categories</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                Manage product categories
-              </p>
-            </div>
-          </div>
+    <div className="p-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>All Categories</CardTitle>
+          <Button onClick={openAddDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Category
+          </Button>
         </CardHeader>
-
-        <CardContent className="p-0">
-          {categoryCount > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50 hover:bg-gray-50 border-b-2">
-                  <TableHead className="font-bold text-gray-900">Category</TableHead>
-                  <TableHead className="font-bold text-gray-900">Description</TableHead>
-                  <TableHead className="font-bold text-gray-900">Image</TableHead>
-                  <TableHead className="text-right font-bold text-gray-900">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.map((category) => (
-                  <TableRow key={category.id} className="hover:bg-purple-50/50 transition-colors border-b">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
-                          <Tag className="h-5 w-5 text-white" />
-                        </div>
-                        <span className="font-bold text-gray-900">
-                          {category.name}
-                        </span>
-                      </div>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Image</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {categories && categories.length > 0 ? (
+                categories.map((category: Category) => (
+                  <TableRow key={category.id}>
+                    <TableCell className="font-medium">
+                      {category.name}
                     </TableCell>
-
-                    <TableCell>
-                      <p className="text-gray-700 line-clamp-2 max-w-md leading-relaxed">
-                        {category.description}
-                      </p>
-                    </TableCell>
-
+                    <TableCell>{category.description}</TableCell>
                     <TableCell>
                       {category.imageUrl ? (
-                        <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-50 shadow-sm">
-                          <Image
-                            src={category.imageUrl}
-                            alt={category.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
+                        <img
+                          src={category.imageUrl}
+                          alt={category.name}
+                          className="h-10 w-10 rounded object-cover"
+                        />
                       ) : (
-                        <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
-                          <ImageIcon className="h-7 w-7 text-gray-400" />
-                        </div>
+                        <span className="text-muted-foreground">No image</span>
                       )}
                     </TableCell>
-
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => openEditDialog(category)}
-                          className="h-10 w-10 p-0 border-2 border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300 rounded-xl"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="outline"
+                          variant="destructive"
                           size="sm"
                           onClick={() => openDeleteDialog(category)}
-                          className="h-10 w-10 p-0 border-2 border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 rounded-xl"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="py-20 text-center">
-              <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6 border-2 border-gray-300">
-                <FolderOpen className="h-12 w-12 text-gray-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                No Categories Found
-              </h3>
-              <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                Get started by creating your first category to organize products.
-              </p>
-              <Button 
-                onClick={openAddDialog}
-                className="h-11 px-6 bg-gradient-to-r from-purple-600 to-purple-700 shadow-lg rounded-xl"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Create First Category
-              </Button>
-            </div>
-          )}
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center text-muted-foreground"
+                  >
+                    No categories found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Add Dialog */}
+      {/* Add Category Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl border-2">
+        <DialogContent>
           <DialogHeader>
-            <div className="flex items-center gap-4 mb-3">
-              <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center border-2 border-purple-300">
-                <Plus className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl font-bold text-gray-900">Add New Category</DialogTitle>
-                <DialogDescription className="text-gray-600 mt-1">
-                  Create a new category for your products.
-                </DialogDescription>
-              </div>
-            </div>
+            <DialogTitle>Add New Category</DialogTitle>
+            <DialogDescription>
+              Create a new category for your products.
+            </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-5 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="flex items-center gap-2 font-semibold text-gray-900">
-                <Tag className="h-4 w-4 text-gray-600" />
-                Category Name <span className="text-red-600">*</span>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">
+                Name <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => updateFormField("name", e.target.value)}
-                placeholder="e.g., Pain Relief, Vitamins"
-                className="h-12 border-2 border-gray-200 rounded-xl focus:border-purple-500"
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                placeholder="Enter category name"
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description" className="flex items-center gap-2 font-semibold text-gray-900">
-                <FileText className="h-4 w-4 text-gray-600" />
-                Description <span className="text-red-600">*</span>
+            <div className="grid gap-2">
+              <Label htmlFor="description">
+                Description <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => updateFormField("description", e.target.value)}
-                placeholder="Describe the category..."
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder="Enter category description"
                 rows={4}
-                className="border-2 border-gray-200 rounded-xl resize-none focus:border-purple-500"
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl" className="flex items-center gap-2 font-semibold text-gray-900">
-                <ImageIcon className="h-4 w-4 text-gray-600" />
-                Image URL <span className="text-gray-500 text-xs font-normal">(Optional)</span>
-              </Label>
+            <div className="grid gap-2">
+              <Label htmlFor="imageUrl">Image URL (Optional)</Label>
               <Input
                 id="imageUrl"
                 value={formData.imageUrl}
-                onChange={(e) => updateFormField("imageUrl", e.target.value)}
-                placeholder="https://example.com/category-image.jpg"
-                className="h-12 border-2 border-gray-200 rounded-xl"
+                onChange={(e) =>
+                  setFormData({ ...formData, imageUrl: e.target.value })
+                }
+                placeholder="Enter image URL"
               />
             </div>
           </div>
-
-          <DialogFooter className="gap-3">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setIsAddDialogOpen(false)}
               disabled={submitting}
-              className="h-11 px-6 border-2 rounded-xl"
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleAddCategory}
-              disabled={submitting}
-              className="h-11 px-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-xl font-semibold shadow-lg"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Create Category
-                </>
-              )}
+            <Button onClick={handleAddCategory} disabled={submitting}>
+              {submitting ? "Creating..." : "Create Category"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
+      {/* Edit Category Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl border-2">
+        <DialogContent>
           <DialogHeader>
-            <div className="flex items-center gap-4 mb-3">
-              <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center border-2 border-amber-300">
-                <Pencil className="h-6 w-6 text-amber-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl font-bold text-gray-900">Edit Category</DialogTitle>
-                <DialogDescription className="text-gray-600 mt-1">
-                  Update the category information.
-                </DialogDescription>
-              </div>
-            </div>
+            <DialogTitle>Edit Category</DialogTitle>
+            <DialogDescription>
+              Update the category information.
+            </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-5 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name" className="flex items-center gap-2 font-semibold text-gray-900">
-                <Tag className="h-4 w-4 text-gray-600" />
-                Category Name <span className="text-red-600">*</span>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-name">
+                Name <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="edit-name"
                 value={formData.name}
-                onChange={(e) => updateFormField("name", e.target.value)}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="Enter category name"
-                className="h-12 border-2 border-gray-200 rounded-xl focus:border-amber-500"
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-description" className="flex items-center gap-2 font-semibold text-gray-900">
-                <FileText className="h-4 w-4 text-gray-600" />
-                Description <span className="text-red-600">*</span>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-description">
+                Description <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 id="edit-description"
                 value={formData.description}
-                onChange={(e) => updateFormField("description", e.target.value)}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Enter category description"
                 rows={4}
-                className="border-2 border-gray-200 rounded-xl resize-none focus:border-amber-500"
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-imageUrl" className="flex items-center gap-2 font-semibold text-gray-900">
-                <ImageIcon className="h-4 w-4 text-gray-600" />
-                Image URL <span className="text-gray-500 text-xs font-normal">(Optional)</span>
-              </Label>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-imageUrl">Image URL (Optional)</Label>
               <Input
                 id="edit-imageUrl"
                 value={formData.imageUrl}
-                onChange={(e) => updateFormField("imageUrl", e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="h-12 border-2 border-gray-200 rounded-xl"
+                onChange={(e) =>
+                  setFormData({ ...formData, imageUrl: e.target.value })
+                }
+                placeholder="Enter image URL"
               />
             </div>
           </div>
-
-          <DialogFooter className="gap-3">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setIsEditDialogOpen(false)}
               disabled={submitting}
-              className="h-11 px-6 border-2 rounded-xl"
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleEditCategory}
-              disabled={submitting}
-              className="h-11 px-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 rounded-xl font-semibold shadow-lg"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Update Category
-                </>
-              )}
+            <Button onClick={handleEditCategory} disabled={submitting}>
+              {submitting ? "Updating..." : "Update Category"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-2xl border-2">
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <div className="flex items-center gap-4 mb-3">
-              <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center border-2 border-red-300">
-                <AlertTriangle className="h-7 w-7 text-red-600" />
-              </div>
-              <div>
-                <AlertDialogTitle className="text-xl font-bold text-gray-900">Delete Category</AlertDialogTitle>
-                <AlertDialogDescription className="text-gray-600 mt-1">
-                  Are you sure you want to delete this category?
-                </AlertDialogDescription>
-              </div>
-            </div>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              category &quot;{selectedCategory?.name}&quot;.
+            </AlertDialogDescription>
           </AlertDialogHeader>
-
-          {selectedCategory && (
-            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 my-3">
-              <p className="font-bold text-gray-900 text-lg">
-                {selectedCategory.name}
-              </p>
-              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                {selectedCategory.description}
-              </p>
-            </div>
-          )}
-
-          <p className="text-sm text-gray-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <strong>Warning:</strong> This action cannot be undone. All products associated with this
-            category may be affected.
-          </p>
-
-          <AlertDialogFooter className="gap-3">
-            <AlertDialogCancel disabled={submitting} className="h-11 px-6 border-2 rounded-xl">
-              Cancel
-            </AlertDialogCancel>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteCategory}
               disabled={submitting}
-              className="h-11 px-6 bg-red-600 hover:bg-red-700 rounded-xl font-semibold shadow-lg"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Category
-                </>
-              )}
+              {submitting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
