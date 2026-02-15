@@ -36,33 +36,45 @@ async function getCookieHeader() {
   const cookieStore = await cookies();
   const allCookies = cookieStore.getAll();
   
+  console.log('🔍 Total cookies found:', allCookies.length);
+  console.log('🔍 All cookie names:', allCookies.map(c => c.name));
+  
   if (allCookies.length === 0) {
-    console.warn('No cookies found');
+    console.error('❌ No cookies found at all');
     return '';
   }
   
   const sessionCookie = allCookies.find(
     c => c.name === 'better-auth.session_token' || 
          c.name === 'better_auth.session_token' ||
-         c.name.includes('session')
+         c.name.includes('session') ||
+         c.name.includes('auth')
   );
   
   if (!sessionCookie) {
-    console.warn('No session cookie found');
+    console.error('❌ No session cookie found');
     console.log('Available cookies:', allCookies.map(c => c.name));
     return '';
   }
   
   console.log('✅ Found session cookie:', sessionCookie.name);
+  console.log('✅ Cookie value (first 20 chars):', sessionCookie.value.substring(0, 20));
   
-  return allCookies
+  const cookieString = allCookies
     .map(cookie => `${cookie.name}=${cookie.value}`)
     .join('; ');
+  
+  console.log('✅ Sending cookie header length:', cookieString.length);
+  
+  return cookieString;
 }
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
   try {
     const cookieHeader = await getCookieHeader();
+    
+    console.log('🌐 Fetching URL:', url);
+    console.log('🍪 Cookie header:', cookieHeader ? 'Present' : 'Missing');
     
     const response = await fetch(url, {
       ...options,
@@ -74,9 +86,16 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
       credentials: 'include',
     });
 
+    console.log('📡 Response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error response:', errorText);
+    }
+
     return response;
   } catch (error) {
-    console.error('Fetch error:', error);
+    console.error('💥 Fetch error:', error);
     throw error;
   }
 }
@@ -84,6 +103,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 export const adminService = {
   getAllUsers: async () => {
     try {
+      console.log('📞 Calling getAllUsers');
       const res = await fetchWithAuth(`${API_URL}/user`, {
         method: "GET",
         cache: "no-store",
@@ -181,6 +201,7 @@ export const adminService = {
 
   getAllOrders: async () => {
     try {
+      console.log('📞 Calling getAllOrders');
       const res = await fetchWithAuth(`${API_URL}/order/all`, {
         method: "GET",
         cache: "no-store",
