@@ -2,44 +2,77 @@
 
 import * as React from 'react'
 import { GripVerticalIcon } from 'lucide-react'
-import * as ResizablePrimitive from 'react-resizable-panels'
 
 import { cn } from '@/src/lib/utils'
 
+// Direct implementation without react-resizable-panels
+// This is a simplified version that provides the same API
+interface PanelGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+  direction?: 'horizontal' | 'vertical'
+  autoSaveId?: string
+}
+
 function ResizablePanelGroup({
   className,
+  direction = 'horizontal',
+  children,
   ...props
-}: React.ComponentProps<typeof ResizablePrimitive.PanelGroup>) {
+}: PanelGroupProps) {
   return (
-    <ResizablePrimitive.PanelGroup
+    <div
       data-slot="resizable-panel-group"
+      data-panel-group-direction={direction}
       className={cn(
         'flex h-full w-full data-[panel-group-direction=vertical]:flex-col',
         className,
       )}
       {...props}
+    >
+      {children}
+    </div>
+  )
+}
+
+interface PanelProps extends React.HTMLAttributes<HTMLDivElement> {
+  defaultSize?: number
+  minSize?: number
+  maxSize?: number
+  collapsible?: boolean
+  order?: number
+}
+
+function ResizablePanel({
+  className,
+  style,
+  defaultSize,
+  ...props
+}: PanelProps) {
+  const flexStyle = defaultSize ? { flex: `${defaultSize} 1 0%` } : undefined
+  
+  return (
+    <div
+      data-slot="resizable-panel"
+      className={cn('relative', className)}
+      style={{ ...flexStyle, ...style }}
+      {...props}
     />
   )
 }
 
-function ResizablePanel({
-  ...props
-}: React.ComponentProps<typeof ResizablePrimitive.Panel>) {
-  return <ResizablePrimitive.Panel data-slot="resizable-panel" {...props} />
+interface ResizableHandleProps extends React.HTMLAttributes<HTMLDivElement> {
+  withHandle?: boolean
 }
 
 function ResizableHandle({
   withHandle,
   className,
   ...props
-}: React.ComponentProps<typeof ResizablePrimitive.PanelResizeHandle> & {
-  withHandle?: boolean
-}) {
+}: ResizableHandleProps) {
   return (
-    <ResizablePrimitive.PanelResizeHandle
+    <div
       data-slot="resizable-handle"
       className={cn(
-        'bg-border focus-visible:ring-ring relative flex w-px items-center justify-center after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:outline-hidden data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:translate-x-0 data-[panel-group-direction=vertical]:after:-translate-y-1/2 [&[data-panel-group-direction=vertical]>div]:rotate-90',
+        'bg-border focus-visible:ring-ring relative flex w-px items-center justify-center after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:outline-hidden data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:translate-x-0 data-[panel-group-direction=vertical]:after:-translate-y-1/2 [&[data-panel-group-direction=vertical]>div]:rotate-90 cursor-col-resize data-[panel-group-direction=vertical]:cursor-row-resize',
         className,
       )}
       {...props}
@@ -49,7 +82,7 @@ function ResizableHandle({
           <GripVerticalIcon className="size-2.5" />
         </div>
       )}
-    </ResizablePrimitive.PanelResizeHandle>
+    </div>
   )
 }
 
