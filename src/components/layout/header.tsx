@@ -9,7 +9,6 @@ import { Search, Heart, ShoppingCart, User, Menu, X, Loader2, ShieldCheck, Store
 
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
-import { useAuth } from "@/src/hooks/use-auth";
 import { authClient } from "@/src/lib/auth-client";
 import { toast } from "@/src/components/ui/use-toast";
 import {
@@ -21,21 +20,62 @@ import {
   DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
 
+// Types for user data
+interface User {
+  id: string;
+  email?: string;
+  name?: string;
+  role?: "ADMIN" | "SELLER" | "CUSTOMER";
+}
+
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   
-  const { isLoggedIn, isLoading, user, refetch } = useAuth();
+  // Auth state management
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Listen for auth changes and refetch auth state
+  // Check auth status
+  const checkAuthStatus = async () => {
+    setIsLoading(true);
+    try {
+      const session = await authClient.getSession();
+      
+      // Check if session data exists and has user property
+      if (session && 'data' in session && session.data?.user) {
+        const userData = session.data.user as any;
+        setIsLoggedIn(true);
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          name: userData.name,
+          role: userData.role || "CUSTOMER",
+        });
+      } else {
+        setIsLoggedIn(false);
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Auth check error:", error);
+      setIsLoggedIn(false);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial auth check
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  // Listen for auth changes
   useEffect(() => {
     const handleAuthChange = async () => {
-      // Force refetch auth state
-      if (refetch) {
-        await refetch();
-      }
-      // Also trigger router refresh to update server components
+      await checkAuthStatus();
       router.refresh();
     };
 
@@ -44,7 +84,7 @@ export function Header() {
     return () => {
       window.removeEventListener('auth-change', handleAuthChange);
     };
-  }, [refetch, router]);
+  }, [router]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

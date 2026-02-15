@@ -5,9 +5,9 @@ import { StoreProvider } from "@/src/store/StoreProvider";
 import { Toaster } from "@/src/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "MediStore  - Your Trusted Online Medicine Shop",
+  title: "MediStore",
   description:
-    "Quality medical supplies, healthcare products, and pharmacy services for your well-being",
+    "Your Trusted Online Medicine Shop",
 };
 
 export default function RootLayout({
