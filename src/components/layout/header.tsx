@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Search, Heart, ShoppingCart, Menu, X, Loader2, ShieldCheck, Store, LogOut, LayoutDashboard, UserCircle, Package } from "lucide-react";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
@@ -28,6 +28,7 @@ interface User {
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -142,6 +143,14 @@ export function Header() {
     if (user?.role === "ADMIN") return "/admin-dashboard";
     if (user?.role === "SELLER") return "/seller-dashboard";
     return null;
+  };
+
+  // Check if link is active
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return pathname === "/";
+    }
+    return pathname.startsWith(path);
   };
 
   const roleStyle = getRoleStyle();
@@ -287,27 +296,140 @@ export function Header() {
       <nav className="border-t border-gray-200 dark:border-gray-800">
         <div className="container mx-auto px-4">
           <ul className="hidden md:flex justify-center items-center gap-8 text-sm font-semibold py-3">
-            <li><Link href="/" className="hover:text-emerald-600 transition-colors py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20">Home</Link></li>
-            <li><Link href="/shop" className="hover:text-emerald-600 transition-colors py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20">Shop</Link></li>
+            <li>
+              <Link 
+                href="/" 
+                className={`transition-colors py-2 px-3 rounded-lg ${
+                  isActive("/") 
+                    ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" 
+                    : "hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                }`}
+              >
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/shop" 
+                className={`transition-colors py-2 px-3 rounded-lg ${
+                  isActive("/shop") 
+                    ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" 
+                    : "hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                }`}
+              >
+                Shop
+              </Link>
+            </li>
             {isCustomer && (
-              <li><Link href="/track-order" className="hover:text-emerald-600 transition-colors py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20">Track Order</Link></li>
+              <li>
+                <Link 
+                  href="/track-order" 
+                  className={`transition-colors py-2 px-3 rounded-lg ${
+                    isActive("/track-order") 
+                      ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" 
+                      : "hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                  }`}
+                >
+                  Track Order
+                </Link>
+              </li>
             )}
-            <li><Link href="/about" className="hover:text-emerald-600 transition-colors py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20">About</Link></li>
-            <li><Link href="/contact" className="hover:text-emerald-600 transition-colors py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20">Contact</Link></li>
+            <li>
+              <Link 
+                href="/about" 
+                className={`transition-colors py-2 px-3 rounded-lg ${
+                  isActive("/about") 
+                    ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" 
+                    : "hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                }`}
+              >
+                About
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/contact" 
+                className={`transition-colors py-2 px-3 rounded-lg ${
+                  isActive("/contact") 
+                    ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" 
+                    : "hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                }`}
+              >
+                Contact
+              </Link>
+            </li>
           </ul>
 
           {menuOpen && (
             <ul className="flex flex-col gap-2 py-4 md:hidden text-sm font-semibold border-t border-gray-200 dark:border-gray-800">
-              <li><Link href="/" onClick={() => setMenuOpen(false)} className="block py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors">Home</Link></li>
-              <li><Link href="/shop" onClick={() => setMenuOpen(false)} className="block py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors">Shop</Link></li>
+              <li>
+                <Link 
+                  href="/" 
+                  onClick={() => setMenuOpen(false)} 
+                  className={`block py-2 px-3 rounded-lg transition-colors ${
+                    isActive("/")
+                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600"
+                      : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600"
+                  }`}
+                >
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  href="/shop" 
+                  onClick={() => setMenuOpen(false)} 
+                  className={`block py-2 px-3 rounded-lg transition-colors ${
+                    isActive("/shop")
+                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600"
+                      : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600"
+                  }`}
+                >
+                  Shop
+                </Link>
+              </li>
               {isCustomer && (
-                <li><Link href="/track-order" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors">
-                  <Package className="h-4 w-4" />
-                  <span>Track Order</span>
-                </Link></li>
+                <li>
+                  <Link 
+                    href="/track-order" 
+                    onClick={() => setMenuOpen(false)} 
+                    className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors ${
+                      isActive("/track-order")
+                        ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600"
+                        : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600"
+                    }`}
+                  >
+                    <Package className="h-4 w-4" />
+                    <span>Track Order</span>
+                  </Link>
+                </li>
               )}
-              <li><Link href="/about" onClick={() => setMenuOpen(false)} className="block py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors">About</Link></li>
-              <li><Link href="/contact" onClick={() => setMenuOpen(false)} className="block py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors">Contact</Link></li>
+              <li>
+                <Link 
+                  href="/about" 
+                  onClick={() => setMenuOpen(false)} 
+                  className={`block py-2 px-3 rounded-lg transition-colors ${
+                    isActive("/about")
+                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600"
+                      : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600"
+                  }`}
+                >
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  href="/contact" 
+                  onClick={() => setMenuOpen(false)} 
+                  className={`block py-2 px-3 rounded-lg transition-colors ${
+                    isActive("/contact")
+                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600"
+                      : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600"
+                  }`}
+                >
+                  Contact
+                </Link>
+              </li>
 
               {!isLoading && !isLoggedIn && (
                 <div className="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-800 mt-2">
