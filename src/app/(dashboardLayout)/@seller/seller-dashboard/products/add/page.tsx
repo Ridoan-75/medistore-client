@@ -42,6 +42,16 @@ interface Category {
   name: string;
 }
 
+const initialFormData = {
+  name: "",
+  description: "",
+  price: "",
+  stock: "",
+  imageUrl: "",
+  categoryId: "",
+  manufacturer: "",
+};
+
 export default function AddProductPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -50,15 +60,7 @@ export default function AddProductPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingCategories, setIsFetchingCategories] = useState(true);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    price: "",
-    stock: "",
-    imageUrl: "",
-    categoryId: "",
-    manufacturer: "",
-  });
+  const [formData, setFormData] = useState(initialFormData);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -142,6 +144,11 @@ export default function AddProductPage() {
         title: "Product created successfully",
         description: `${formData.name} has been added to your inventory`,
       });
+      
+      // Reset form to initial state
+      setFormData(initialFormData);
+      setErrors({});
+      
       router.push("/seller-dashboard/products");
       router.refresh();
     }
