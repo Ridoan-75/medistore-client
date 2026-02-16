@@ -11,7 +11,6 @@ import {
   Linkedin,
 } from "lucide-react";
 
-/* ---------- Types ---------- */
 interface SocialLink {
   icon: LucideIcon;
   href: string;
@@ -29,7 +28,6 @@ interface ContactInfo {
   href?: string;
 }
 
-/* ---------- Data ---------- */
 const SOCIAL_LINKS: SocialLink[] = [
   { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
   { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
@@ -63,17 +61,14 @@ const SERVICES: QuickLink[] = [
 
 const CONTACT_INFO: ContactInfo[] = [
   { icon: MapPin, text: "123 Road, Dhaka, Bangladesh" },
-  { icon: Phone, text: "(+880)0000000", href: "tel:+8800000000" },
-  { icon: Mail, text: "sajiburbedsr02@gmail.com", href: "mailto:sajiburbedsr02@gmail.com" },
+  { icon: Phone, text: "(+880)019209219", href: "tel:+8800000000" },
+  { icon: Mail, text: "medistore@gmail.com", href: "medistore@gmail.com" },
 ];
 
 const CURRENT_YEAR = new Date().getFullYear();
-
-/* ---------- Component ---------- */
 export function Footer() {
   return (
     <footer className="bg-[#2d5f4f] text-white mt-16">
-      {/* ================= MAIN FOOTER ================= */}
       <div className="container mx-auto px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           
@@ -189,11 +184,10 @@ export function Footer() {
         </div>
       </div>
 
-      {/* ================= BOTTOM BAR ================= */}
       <div className="border-t border-gray-600">
         <div className="container mx-auto px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-3 text-sm">
           <p className="text-gray-300">
-            © {CURRENT_YEAR} HEALTHU. All rights reserved.
+            © {CURRENT_YEAR} MediStore. All rights reserved.
           </p>
 
           <div className="flex gap-6">
