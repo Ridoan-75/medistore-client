@@ -119,15 +119,6 @@ export function ProductReviews({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isLoggedIn) {
-      toast({
-        title: "Login required",
-        description: "Please login to submit a review",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (rating === 0) {
       toast({
         title: "Rating required",
@@ -170,6 +161,7 @@ export function ProductReviews({
       setHasReviewed(true);
       setRating(0);
       setComment("");
+      setHoverRating(0);
 
       toast({
         title: "Review submitted",
@@ -232,6 +224,7 @@ export function ProductReviews({
         </div>
       )}
 
+      {/* Review Form - Only show if logged in AND hasn't reviewed yet */}
       {isLoggedIn && !hasReviewed && (
         <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-8 md:p-10 shadow-xl">
           <div className="flex items-center gap-4 mb-8">
@@ -291,6 +284,7 @@ export function ProductReviews({
                 placeholder="What did you like or dislike about this product? How was your experience?"
                 rows={6}
                 className="resize-none border-2 rounded-2xl text-base"
+                maxLength={500}
               />
               <p className="text-sm text-slate-600 dark:text-slate-400 font-semibold">
                 {comment.length}/500 characters
@@ -318,6 +312,7 @@ export function ProductReviews({
         </div>
       )}
 
+      {/* Already Reviewed Message */}
       {isLoggedIn && hasReviewed && (
         <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-3xl p-8 flex items-center gap-6 shadow-xl">
           <div className="relative">
@@ -337,6 +332,7 @@ export function ProductReviews({
         </div>
       )}
 
+      {/* Login Required Message */}
       {!isLoggedIn && (
         <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-12 text-center shadow-xl">
           <div className="relative inline-block mb-6">
@@ -360,6 +356,7 @@ export function ProductReviews({
         </div>
       )}
 
+      {/* Reviews List */}
       <div className="space-y-8">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-gradient-to-br from-violet-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
