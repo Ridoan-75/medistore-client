@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Heart, ShoppingCart, Menu, X, Loader2, ShieldCheck, Store, LogOut, LayoutDashboard, UserCircle } from "lucide-react";
+import { Search, Heart, ShoppingCart, Menu, X, Loader2, ShieldCheck, Store, LogOut, LayoutDashboard, UserCircle, Package } from "lucide-react";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import { authClient } from "@/src/lib/auth-client";
@@ -147,6 +147,9 @@ export function Header() {
   const roleStyle = getRoleStyle();
   const RoleIcon = roleStyle.icon;
 
+  // Check if user is customer
+  const isCustomer = isLoggedIn && user?.role === "CUSTOMER";
+
   return (
     <header className="w-full border-b bg-white dark:bg-gray-900 sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto flex items-center justify-between py-4 px-4 gap-4">
@@ -286,6 +289,9 @@ export function Header() {
           <ul className="hidden md:flex justify-center items-center gap-8 text-sm font-semibold py-3">
             <li><Link href="/" className="hover:text-emerald-600 transition-colors py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20">Home</Link></li>
             <li><Link href="/shop" className="hover:text-emerald-600 transition-colors py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20">Shop</Link></li>
+            {isCustomer && (
+              <li><Link href="/track-order" className="hover:text-emerald-600 transition-colors py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20">Track Order</Link></li>
+            )}
             <li><Link href="/about" className="hover:text-emerald-600 transition-colors py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20">About</Link></li>
             <li><Link href="/contact" className="hover:text-emerald-600 transition-colors py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20">Contact</Link></li>
           </ul>
@@ -294,6 +300,12 @@ export function Header() {
             <ul className="flex flex-col gap-2 py-4 md:hidden text-sm font-semibold border-t border-gray-200 dark:border-gray-800">
               <li><Link href="/" onClick={() => setMenuOpen(false)} className="block py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors">Home</Link></li>
               <li><Link href="/shop" onClick={() => setMenuOpen(false)} className="block py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors">Shop</Link></li>
+              {isCustomer && (
+                <li><Link href="/track-order" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors">
+                  <Package className="h-4 w-4" />
+                  <span>Track Order</span>
+                </Link></li>
+              )}
               <li><Link href="/about" onClick={() => setMenuOpen(false)} className="block py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors">About</Link></li>
               <li><Link href="/contact" onClick={() => setMenuOpen(false)} className="block py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors">Contact</Link></li>
 

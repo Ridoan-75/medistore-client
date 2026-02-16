@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -109,6 +109,15 @@ export function ProductReviews({
   const { toast } = useToast();
   const router = useRouter();
 
+  // DEBUG: Log the props
+  useEffect(() => {
+    console.log("=== ProductReviews Debug ===");
+    console.log("isLoggedIn:", isLoggedIn);
+    console.log("userReview:", userReview);
+    console.log("hasReviewed:", hasReviewed);
+    console.log("========================");
+  }, [isLoggedIn, userReview, hasReviewed]);
+
   const displayRating = hoverRating || rating;
   const ratingStats = calculateRatingStats(reviews);
   const averageRating =
@@ -174,6 +183,14 @@ export function ProductReviews({
 
   return (
     <div className="space-y-10">
+      {/* DEBUG INFO - Remove this in production */}
+      <div className="p-4 bg-yellow-100 border-2 border-yellow-400 rounded-lg">
+        <h4 className="font-bold mb-2">DEBUG INFO:</h4>
+        <p>isLoggedIn: {String(isLoggedIn)}</p>
+        <p>hasReviewed: {String(hasReviewed)}</p>
+        <p>userReview: {userReview ? "Yes" : "No"}</p>
+      </div>
+
       {reviews.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 md:p-10 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-3xl border-2 border-amber-200/50 dark:border-amber-800/50">
           <div className="text-center md:border-r-2 border-amber-200 dark:border-amber-800">
