@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { productService } from "@/src/services/product.service";
 import { reviewService } from "@/src/services/review.service";
-import { userService } from "@/src/services/user.service";
 import { Badge } from "@/src/components/ui/badge";
 import {
   Tabs,
@@ -108,10 +107,9 @@ const formatPrice = (price: number): string => `৳${price.toFixed(2)}`;
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { id } = await params;
 
-  const [productResult, reviewsResult, sessionResult] = await Promise.all([
+  const [productResult, reviewsResult] = await Promise.all([
     productService.getProductById(id),
     reviewService.getMedicineReviews(id),
-    userService.getSession(),
   ]);
 
   const { data: product, error } = productResult;
@@ -126,10 +124,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   }
 
   const reviews = reviewsResult.data || [];
-  const session = sessionResult.data;
-  const isLoggedIn = !!(session?.user?.id);
-  const userId = session?.user?.id;
-  const userReview = reviews.find((r) => r.user?.id === userId) || null;
   const averageRating = calculateAverageRating(reviews);
   const stockBadge = getStockBadgeConfig(product.status as ProductStatus, product.stock);
   const StockIcon = stockBadge.icon;
@@ -397,8 +391,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               <ProductReviews
                 medicineId={id}
                 initialReviews={reviews}
-                userReview={userReview}
-                isLoggedIn={isLoggedIn}
               />
             </TabsContent>
           </Tabs>
