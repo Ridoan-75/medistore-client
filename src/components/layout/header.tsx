@@ -35,6 +35,23 @@ export function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  // Cart & Wishlist counts
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  // Read counts from localStorage (or your state management)
+  const syncCounts = () => {
+    try {
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      setCartCount(Array.isArray(cart) ? cart.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0) : 0);
+      setWishlistCount(Array.isArray(wishlist) ? wishlist.length : 0);
+    } catch {
+      setCartCount(0);
+      setWishlistCount(0);
+    }
+  };
+
   const checkAuthStatus = async () => {
     try {
       const response = await authClient.getSession();
@@ -63,15 +80,28 @@ export function Header() {
 
   useEffect(() => {
     checkAuthStatus();
+    syncCounts();
 
     const handleAuthChange = () => {
       checkAuthStatus();
     };
 
-    window.addEventListener('auth-changed', handleAuthChange);
+    // Listen for cart/wishlist updates
+    const handleCartUpdate = () => syncCounts();
+    const handleWishlistUpdate = () => syncCounts();
+
+    window.addEventListener("auth-changed", handleAuthChange);
+    window.addEventListener("cart-updated", handleCartUpdate);
+    window.addEventListener("wishlist-updated", handleWishlistUpdate);
+
+    // Also sync on storage change (cross-tab support)
+    window.addEventListener("storage", syncCounts);
 
     return () => {
-      window.removeEventListener('auth-changed', handleAuthChange);
+      window.removeEventListener("auth-changed", handleAuthChange);
+      window.removeEventListener("cart-updated", handleCartUpdate);
+      window.removeEventListener("wishlist-updated", handleWishlistUpdate);
+      window.removeEventListener("storage", syncCounts);
     };
   }, []);
 
@@ -96,9 +126,9 @@ export function Header() {
         description: "See you again soon!",
       });
       
-      window.dispatchEvent(new Event('auth-changed'));
+      window.dispatchEvent(new Event("auth-changed"));
       
-      router.push('/');
+      router.push("/");
       router.refresh();
     } catch (error) {
       console.error("Logout error:", error);
@@ -145,18 +175,13 @@ export function Header() {
     return null;
   };
 
-  // Check if link is active
   const isActive = (path: string) => {
-    if (path === "/") {
-      return pathname === "/";
-    }
+    if (path === "/") return pathname === "/";
     return pathname.startsWith(path);
   };
 
   const roleStyle = getRoleStyle();
   const RoleIcon = roleStyle.icon;
-
-  // Check if user is customer
   const isCustomer = isLoggedIn && user?.role === "CUSTOMER";
 
   return (
@@ -190,20 +215,28 @@ export function Header() {
         </form>
 
         <div className="flex items-center gap-2">
-          <Link 
-            href="/wishlist" 
-            className="hover:text-emerald-600 transition-colors p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+          {/* Wishlist with badge */}
+          <Link
+            href="/wishlist"
+            className="relative hover:text-emerald-600 transition-colors p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
             aria-label="Wishlist"
           >
             <Heart className="h-5 w-5" />
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-emerald-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-[3px] leading-none">
+              {wishlistCount > 99 ? "99+" : wishlistCount}
+            </span>
           </Link>
 
-          <Link 
-            href="/cart" 
-            className="hover:text-emerald-600 transition-colors p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 relative"
+          {/* Cart with badge */}
+          <Link
+            href="/cart"
+            className="relative hover:text-emerald-600 transition-colors p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
             aria-label="Shopping Cart"
           >
             <ShoppingCart className="h-5 w-5" />
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-emerald-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-[3px] leading-none">
+              {cartCount > 99 ? "99+" : cartCount}
+            </span>
           </Link>
 
           {isLoading ? (
@@ -213,7 +246,7 @@ export function Header() {
           ) : isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button 
+                <button
                   className={`${roleStyle.bgColor} ${roleStyle.hoverBg} transition-colors p-2 rounded-lg flex items-center gap-2`}
                   aria-label="Profile Menu"
                 >
@@ -233,7 +266,7 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                
+
                 {(user?.role === "ADMIN" || user?.role === "SELLER") && getDashboardLink() && (
                   <>
                     <DropdownMenuItem asChild>
@@ -245,8 +278,8 @@ export function Header() {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                
-                <DropdownMenuItem 
+
+                <DropdownMenuItem
                   onClick={handleLogout}
                   disabled={isLoggingOut}
                   className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
@@ -257,18 +290,25 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
+            // ✅ Both buttons same green color + same hover
             <div className="hidden sm:flex gap-2">
-              <Button asChild variant="ghost" className="font-semibold text-sm hover:text-emerald-600 hover:bg-emerald-50">
+              <Button
+                asChild
+                className="font-semibold text-sm bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+              >
                 <Link href="/login">Sign In</Link>
               </Button>
-              <Button asChild className="font-semibold text-sm bg-emerald-600 hover:bg-emerald-700">
+              <Button
+                asChild
+                className="font-semibold text-sm bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+              >
                 <Link href="/register">Sign Up</Link>
               </Button>
             </div>
           )}
 
-          <button 
-            onClick={() => setMenuOpen(!menuOpen)} 
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
             className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Toggle menu"
           >
@@ -295,26 +335,27 @@ export function Header() {
 
       <nav className="border-t border-gray-200 dark:border-gray-800">
         <div className="container mx-auto px-4">
-          <ul className="hidden md:flex justify-center items-center gap-8 text-sm font-semibold py-3">
+          {/* ✅ Nav links with darker/bolder color */}
+          <ul className="hidden md:flex justify-center items-center gap-8 text-sm font-bold py-3">
             <li>
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className={`transition-colors py-2 px-3 rounded-lg ${
-                  isActive("/") 
-                    ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" 
-                    : "hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                  isActive("/")
+                    ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20"
+                    : "text-gray-800 dark:text-gray-200 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                 }`}
               >
                 Home
               </Link>
             </li>
             <li>
-              <Link 
-                href="/shop" 
+              <Link
+                href="/shop"
                 className={`transition-colors py-2 px-3 rounded-lg ${
-                  isActive("/shop") 
-                    ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" 
-                    : "hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                  isActive("/shop")
+                    ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20"
+                    : "text-gray-800 dark:text-gray-200 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                 }`}
               >
                 Shop
@@ -322,12 +363,12 @@ export function Header() {
             </li>
             {isCustomer && (
               <li>
-                <Link 
-                  href="/track-order" 
+                <Link
+                  href="/track-order"
                   className={`transition-colors py-2 px-3 rounded-lg ${
-                    isActive("/track-order") 
-                      ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" 
-                      : "hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                    isActive("/track-order")
+                      ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20"
+                      : "text-gray-800 dark:text-gray-200 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                   }`}
                 >
                   Track Order
@@ -335,24 +376,24 @@ export function Header() {
               </li>
             )}
             <li>
-              <Link 
-                href="/about" 
+              <Link
+                href="/about"
                 className={`transition-colors py-2 px-3 rounded-lg ${
-                  isActive("/about") 
-                    ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" 
-                    : "hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                  isActive("/about")
+                    ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20"
+                    : "text-gray-800 dark:text-gray-200 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                 }`}
               >
                 About
               </Link>
             </li>
             <li>
-              <Link 
-                href="/contact" 
+              <Link
+                href="/contact"
                 className={`transition-colors py-2 px-3 rounded-lg ${
-                  isActive("/contact") 
-                    ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" 
-                    : "hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                  isActive("/contact")
+                    ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20"
+                    : "text-gray-800 dark:text-gray-200 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                 }`}
               >
                 Contact
@@ -361,28 +402,28 @@ export function Header() {
           </ul>
 
           {menuOpen && (
-            <ul className="flex flex-col gap-2 py-4 md:hidden text-sm font-semibold border-t border-gray-200 dark:border-gray-800">
+            <ul className="flex flex-col gap-2 py-4 md:hidden text-sm font-bold border-t border-gray-200 dark:border-gray-800">
               <li>
-                <Link 
-                  href="/" 
-                  onClick={() => setMenuOpen(false)} 
+                <Link
+                  href="/"
+                  onClick={() => setMenuOpen(false)}
                   className={`block py-2 px-3 rounded-lg transition-colors ${
                     isActive("/")
-                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600"
-                      : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600"
+                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700"
+                      : "text-gray-800 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700"
                   }`}
                 >
                   Home
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/shop" 
-                  onClick={() => setMenuOpen(false)} 
+                <Link
+                  href="/shop"
+                  onClick={() => setMenuOpen(false)}
                   className={`block py-2 px-3 rounded-lg transition-colors ${
                     isActive("/shop")
-                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600"
-                      : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600"
+                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700"
+                      : "text-gray-800 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700"
                   }`}
                 >
                   Shop
@@ -390,13 +431,13 @@ export function Header() {
               </li>
               {isCustomer && (
                 <li>
-                  <Link 
-                    href="/track-order" 
-                    onClick={() => setMenuOpen(false)} 
+                  <Link
+                    href="/track-order"
+                    onClick={() => setMenuOpen(false)}
                     className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors ${
                       isActive("/track-order")
-                        ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600"
-                        : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600"
+                        ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700"
+                        : "text-gray-800 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700"
                     }`}
                   >
                     <Package className="h-4 w-4" />
@@ -405,26 +446,26 @@ export function Header() {
                 </li>
               )}
               <li>
-                <Link 
-                  href="/about" 
-                  onClick={() => setMenuOpen(false)} 
+                <Link
+                  href="/about"
+                  onClick={() => setMenuOpen(false)}
                   className={`block py-2 px-3 rounded-lg transition-colors ${
                     isActive("/about")
-                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600"
-                      : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600"
+                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700"
+                      : "text-gray-800 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700"
                   }`}
                 >
                   About
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/contact" 
-                  onClick={() => setMenuOpen(false)} 
+                <Link
+                  href="/contact"
+                  onClick={() => setMenuOpen(false)}
                   className={`block py-2 px-3 rounded-lg transition-colors ${
                     isActive("/contact")
-                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600"
-                      : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600"
+                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700"
+                      : "text-gray-800 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700"
                   }`}
                 >
                   Contact
@@ -433,8 +474,18 @@ export function Header() {
 
               {!isLoading && !isLoggedIn && (
                 <div className="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-800 mt-2">
-                  <Button asChild variant="outline" className="w-full justify-start"><Link href="/login" onClick={() => setMenuOpen(false)}>Sign In</Link></Button>
-                  <Button asChild className="w-full justify-start bg-emerald-600 hover:bg-emerald-700"><Link href="/register" onClick={() => setMenuOpen(false)}>Sign Up</Link></Button>
+                  <Button
+                    asChild
+                    className="w-full justify-start bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+                  >
+                    <Link href="/login" onClick={() => setMenuOpen(false)}>Sign In</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    className="w-full justify-start bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+                  >
+                    <Link href="/register" onClick={() => setMenuOpen(false)}>Sign Up</Link>
+                  </Button>
                 </div>
               )}
 
@@ -451,13 +502,21 @@ export function Header() {
                   </div>
 
                   {(user?.role === "ADMIN" || user?.role === "SELLER") && getDashboardLink() && (
-                    <Link href={getDashboardLink()!} onClick={() => setMenuOpen(false)} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-colors">
+                    <Link
+                      href={getDashboardLink()!}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 transition-colors"
+                    >
                       <LayoutDashboard className="h-5 w-5" />
                       <span>Dashboard</span>
                     </Link>
                   )}
 
-                  <button onClick={() => { setMenuOpen(false); handleLogout(); }} disabled={isLoggingOut} className="w-full flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 transition-colors">
+                  <button
+                    onClick={() => { setMenuOpen(false); handleLogout(); }}
+                    disabled={isLoggingOut}
+                    className="w-full flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 transition-colors"
+                  >
                     <LogOut className="h-5 w-5" />
                     <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
                   </button>
