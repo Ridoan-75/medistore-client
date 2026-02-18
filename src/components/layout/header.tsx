@@ -4,7 +4,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Search, Heart, ShoppingCart, Menu, X, Loader2, ShieldCheck, Store, LogOut, LayoutDashboard, UserCircle, Package } from "lucide-react";
+import {
+  Search,
+  Heart,
+  ShoppingCart,
+  Menu,
+  X,
+  Loader2,
+  ShieldCheck,
+  Store,
+  LogOut,
+  LayoutDashboard,
+  UserCircle,
+  Package,
+} from "lucide-react";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import { authClient } from "@/src/lib/auth-client";
@@ -29,22 +42,27 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Cart & Wishlist counts
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
 
-  // Read counts from localStorage (or your state management)
   const syncCounts = () => {
     try {
       const cart = JSON.parse(localStorage.getItem("cart") || "[]");
       const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
-      setCartCount(Array.isArray(cart) ? cart.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0) : 0);
+      setCartCount(
+        Array.isArray(cart)
+          ? cart.reduce(
+              (acc: number, item: any) => acc + (item.quantity || 1),
+              0,
+            )
+          : 0,
+      );
       setWishlistCount(Array.isArray(wishlist) ? wishlist.length : 0);
     } catch {
       setCartCount(0);
@@ -55,7 +73,7 @@ export function Header() {
   const checkAuthStatus = async () => {
     try {
       const response = await authClient.getSession();
-      
+
       if (response?.data?.user) {
         const userData = response.data.user as any;
         setIsLoggedIn(true);
@@ -86,7 +104,6 @@ export function Header() {
       checkAuthStatus();
     };
 
-    // Listen for cart/wishlist updates
     const handleCartUpdate = () => syncCounts();
     const handleWishlistUpdate = () => syncCounts();
 
@@ -94,7 +111,6 @@ export function Header() {
     window.addEventListener("cart-updated", handleCartUpdate);
     window.addEventListener("wishlist-updated", handleWishlistUpdate);
 
-    // Also sync on storage change (cross-tab support)
     window.addEventListener("storage", syncCounts);
 
     return () => {
@@ -120,14 +136,14 @@ export function Header() {
       await authClient.signOut();
       setIsLoggedIn(false);
       setUser(null);
-      
+
       toast({
         title: "Logged out successfully",
         description: "See you again soon!",
       });
-      
+
       window.dispatchEvent(new Event("auth-changed"));
-      
+
       router.push("/");
       router.refresh();
     } catch (error) {
@@ -215,28 +231,20 @@ export function Header() {
         </form>
 
         <div className="flex items-center gap-2">
-          {/* Wishlist with badge */}
           <Link
             href="/wishlist"
             className="relative hover:text-emerald-600 transition-colors p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
             aria-label="Wishlist"
           >
             <Heart className="h-5 w-5" />
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-emerald-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-[3px] leading-none">
-              {wishlistCount > 99 ? "99+" : wishlistCount}
-            </span>
           </Link>
 
-          {/* Cart with badge */}
           <Link
             href="/cart"
             className="relative hover:text-emerald-600 transition-colors p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
             aria-label="Shopping Cart"
           >
             <ShoppingCart className="h-5 w-5" />
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-emerald-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-[3px] leading-none">
-              {cartCount > 99 ? "99+" : cartCount}
-            </span>
           </Link>
 
           {isLoading ? (
@@ -256,28 +264,38 @@ export function Header() {
               <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel>
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 ${roleStyle.bgColor} rounded-full flex items-center justify-center`}>
+                    <div
+                      className={`w-10 h-10 ${roleStyle.bgColor} rounded-full flex items-center justify-center`}
+                    >
                       <RoleIcon className={`h-5 w-5 ${roleStyle.color}`} />
                     </div>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-semibold">{user?.name || user?.email}</p>
-                      <p className={`text-xs font-medium ${roleStyle.color}`}>{roleStyle.label}</p>
+                      <p className="text-sm font-semibold">
+                        {user?.name || user?.email}
+                      </p>
+                      <p className={`text-xs font-medium ${roleStyle.color}`}>
+                        {roleStyle.label}
+                      </p>
                     </div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
 
-                {(user?.role === "ADMIN" || user?.role === "SELLER") && getDashboardLink() && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href={getDashboardLink()!} className="cursor-pointer">
-                        <LayoutDashboard className="h-4 w-4 mr-2" />
-                        Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
+                {(user?.role === "ADMIN" || user?.role === "SELLER") &&
+                  getDashboardLink() && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={getDashboardLink()!}
+                          className="cursor-pointer"
+                        >
+                          <LayoutDashboard className="h-4 w-4 mr-2" />
+                          Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
 
                 <DropdownMenuItem
                   onClick={handleLogout}
@@ -290,7 +308,6 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            // ✅ Both buttons same green color + same hover
             <div className="hidden sm:flex gap-2">
               <Button
                 asChild
@@ -312,7 +329,11 @@ export function Header() {
             className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Toggle menu"
           >
-            {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {menuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
           </button>
         </div>
       </div>
@@ -327,7 +348,10 @@ export function Header() {
             placeholder="Search medicine..."
             className="border-0 focus-visible:ring-0 h-10 bg-white dark:bg-gray-800"
           />
-          <Button type="submit" className="rounded-none bg-emerald-600 hover:bg-emerald-700 px-5 h-10">
+          <Button
+            type="submit"
+            className="rounded-none bg-emerald-600 hover:bg-emerald-700 px-5 h-10"
+          >
             <Search className="h-4 w-4 text-white" />
           </Button>
         </form>
@@ -335,7 +359,6 @@ export function Header() {
 
       <nav className="border-t border-gray-200 dark:border-gray-800">
         <div className="container mx-auto px-4">
-          {/* ✅ Nav links with darker/bolder color */}
           <ul className="hidden md:flex justify-center items-center gap-8 text-sm font-bold py-3">
             <li>
               <Link
@@ -478,42 +501,56 @@ export function Header() {
                     asChild
                     className="w-full justify-start bg-emerald-600 hover:bg-emerald-700 text-white border-0"
                   >
-                    <Link href="/login" onClick={() => setMenuOpen(false)}>Sign In</Link>
+                    <Link href="/login" onClick={() => setMenuOpen(false)}>
+                      Sign In
+                    </Link>
                   </Button>
                   <Button
                     asChild
                     className="w-full justify-start bg-emerald-600 hover:bg-emerald-700 text-white border-0"
                   >
-                    <Link href="/register" onClick={() => setMenuOpen(false)}>Sign Up</Link>
+                    <Link href="/register" onClick={() => setMenuOpen(false)}>
+                      Sign Up
+                    </Link>
                   </Button>
                 </div>
               )}
 
               {!isLoading && isLoggedIn && (
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-800 mt-2 space-y-2">
-                  <div className={`flex items-center gap-3 py-3 px-3 rounded-lg ${roleStyle.bgColor}`}>
+                  <div
+                    className={`flex items-center gap-3 py-3 px-3 rounded-lg ${roleStyle.bgColor}`}
+                  >
                     <div className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">
                       <RoleIcon className={`h-5 w-5 ${roleStyle.color}`} />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">{roleStyle.label}</p>
-                      <p className="font-semibold text-sm">{user?.name || user?.email}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {roleStyle.label}
+                      </p>
+                      <p className="font-semibold text-sm">
+                        {user?.name || user?.email}
+                      </p>
                     </div>
                   </div>
 
-                  {(user?.role === "ADMIN" || user?.role === "SELLER") && getDashboardLink() && (
-                    <Link
-                      href={getDashboardLink()!}
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 transition-colors"
-                    >
-                      <LayoutDashboard className="h-5 w-5" />
-                      <span>Dashboard</span>
-                    </Link>
-                  )}
+                  {(user?.role === "ADMIN" || user?.role === "SELLER") &&
+                    getDashboardLink() && (
+                      <Link
+                        href={getDashboardLink()!}
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 transition-colors"
+                      >
+                        <LayoutDashboard className="h-5 w-5" />
+                        <span>Dashboard</span>
+                      </Link>
+                    )}
 
                   <button
-                    onClick={() => { setMenuOpen(false); handleLogout(); }}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      handleLogout();
+                    }}
                     disabled={isLoggingOut}
                     className="w-full flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 transition-colors"
                   >
