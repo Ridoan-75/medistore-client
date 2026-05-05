@@ -1,5 +1,5 @@
 import { env } from "./../env";
-import { cookies } from "next/headers";
+import { getAuthToken } from "@/src/lib/auth";
 
 const API_URL = env.API_URL;
 
@@ -28,12 +28,12 @@ export interface ReviewResponse {
 export const reviewService = {
   createReview: async (payload: CreateReviewPayload) => {
     try {
-      const cookieStore = await cookies();
+      const token = await getAuthToken();
       const res = await fetch(`${API_URL}/review`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          cookie: cookieStore.toString(),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
       });

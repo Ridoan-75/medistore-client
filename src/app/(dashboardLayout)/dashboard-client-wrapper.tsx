@@ -10,7 +10,7 @@ import {
   SidebarTrigger,
 } from "@/src/components/ui/sidebar";
 import { Roles } from "@/src/constants/roles";
-import { authClient } from "@/src/lib/auth-client";
+import { onAuthChange } from "@/src/lib/auth";
 
 interface User {
   id: string;
@@ -24,13 +24,6 @@ interface DashboardClientWrapperProps {
   seller: React.ReactNode;
 }
 
-interface AuthUser {
-  id: string;
-  email?: string;
-  name?: string;
-  role?: string;
-}
-
 export function DashboardClientWrapper({
   admin,
   seller,
@@ -40,69 +33,47 @@ export function DashboardClientWrapper({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const unsubscribe = onAuthChange(async (firebaseUser) => {
       try {
-        const cachedSession = localStorage.getItem('user-session');
-        
-        if (cachedSession) {
-          const parsed = JSON.parse(cachedSession);
-          const age = Date.now() - (parsed.timestamp || 0);
-          
-          if (age < 30 * 60 * 1000) {
-            if (parsed.role === Roles.ADMIN || parsed.role === Roles.SELLER) {
-              setUser({
-                id: parsed.id,
-                email: parsed.email,
-                name: parsed.name,
-                role: parsed.role,
-              });
-              setIsLoading(false);
-              return;
-            } else {
-              router.push("/");
-              return;
-            }
-          }
-        }
-
-        const { data } = await authClient.getSession();
-        
-        if (!data?.user) {
+        if (!firebaseUser) {
           router.push("/login");
           return;
         }
 
-        const userData = data.user as AuthUser;
-        const userRole = userData.role || "CUSTOMER";
-        
+        const token = await firebaseUser.getIdToken();
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (!res.ok) {
+          router.push("/login");
+          return;
+        }
+
+        const data = await res.json();
+        const userRole: string = data.role || "CUSTOMER";
+
         if (userRole !== Roles.ADMIN && userRole !== Roles.SELLER) {
           router.push("/");
           return;
         }
 
-        const userInfo: User = {
-          id: userData.id,
-          email: userData.email,
-          name: userData.name,
+        setUser({
+          id: firebaseUser.uid,
+          email: firebaseUser.email ?? undefined,
+          name: firebaseUser.displayName ?? data.name ?? undefined,
           role: userRole as "ADMIN" | "SELLER" | "CUSTOMER",
-        };
-
-        setUser(userInfo);
-
-        localStorage.setItem('user-session', JSON.stringify({
-          ...userInfo,
-          timestamp: Date.now()
-        }));
-
+        });
       } catch (error) {
         console.error("Auth check error:", error);
         router.push("/login");
       } finally {
         setIsLoading(false);
       }
-    };
+    });
 
-    checkAuth();
+    return () => unsubscribe();
   }, [router]);
 
   if (isLoading) {

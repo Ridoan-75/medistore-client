@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { authClient } from "@/src/lib/auth-client";
+import { logout } from "@/src/lib/auth";
 import { useToast } from "@/src/hooks/use-toast";
 import {
   SidebarMenu,
@@ -19,20 +19,13 @@ export function LogoutButton() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await authClient.signOut();
-      
-      // Remove user from localStorage
-      localStorage.removeItem('medistore_user');
-      
-      // Dispatch event to update auth state immediately
-      window.dispatchEvent(new Event('auth-change'));
-      
+      await logout();
+
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
       });
-      
-      // Refresh and redirect
+
       router.refresh();
       setTimeout(() => {
         router.push("/");

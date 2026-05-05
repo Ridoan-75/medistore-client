@@ -1,5 +1,7 @@
 import { env } from "./../env";
-import { cookies } from "next/headers";
+import { getAuthToken } from "@/src/lib/auth";
+
+const API_URL = env.API_URL;
 
 export interface CreateOrderItemPayload {
   medicineId: string;
@@ -42,19 +44,16 @@ export interface Order {
   orderItems: OrderItem[];
 }
 
-const API_URL = env.API_URL;
-
 export const orderService = {
   createOrder: async (payload: CreateOrderPayload) => {
     try {
-      const cookieStore = await cookies();
+      const token = await getAuthToken();
       const res = await fetch(`${API_URL}/order`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          cookie: cookieStore.toString(),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-
         body: JSON.stringify(payload),
       });
 
@@ -67,7 +66,6 @@ export const orderService = {
       }
 
       const response = await res.json();
-      console.log(response);
       return {
         data: response.data as Order,
         error: null,
@@ -83,11 +81,11 @@ export const orderService = {
 
   getUserOrders: async () => {
     try {
-      const cookieStore = await cookies();
+      const token = await getAuthToken();
       const res = await fetch(`${API_URL}/order`, {
         method: "GET",
         headers: {
-          cookie: cookieStore.toString(),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         cache: "no-store",
       });
@@ -115,11 +113,11 @@ export const orderService = {
 
   trackOrderStatus: async (orderId: string) => {
     try {
-      const cookieStore = await cookies();
+      const token = await getAuthToken();
       const res = await fetch(`${API_URL}/order/${orderId}/status`, {
         method: "GET",
         headers: {
-          cookie: cookieStore.toString(),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         cache: "no-store",
       });

@@ -19,7 +19,7 @@ import { Textarea } from "@/src/components/ui/textarea";
 import { Label } from "@/src/components/ui/label";
 import { useToast } from "@/src/hooks/use-toast";
 import { createReviewAction } from "@/src/actions/review.action";
-import { authClient } from "@/src/lib/auth-client";
+import { onAuthChange } from "@/src/lib/auth";
 
 interface ReviewUser {
   id: string;
@@ -94,14 +94,12 @@ export function ProductReviews({ medicineId, initialReviews }: ProductReviewsPro
 
   // Resolve session on the client where cookies are always accessible
   useEffect(() => {
-    const checkSession = async () => {
+    const unsubscribe = onAuthChange(async (firebaseUser) => {
       try {
-        const response = await authClient.getSession();
-        if (response?.data?.user) {
-          const userId = response.data.user.id;
+        if (firebaseUser) {
+          const userId = firebaseUser.uid;
           setIsLoggedIn(true);
           setCurrentUserId(userId);
-          // check if this user already reviewed
           const alreadyReviewed = initialReviews.some((r) => r.user?.id === userId);
           setHasReviewed(alreadyReviewed);
         } else {
@@ -114,8 +112,8 @@ export function ProductReviews({ medicineId, initialReviews }: ProductReviewsPro
       } finally {
         setAuthLoading(false);
       }
-    };
-    checkSession();
+    });
+    return () => unsubscribe();
   }, [initialReviews]);
 
   const displayRating = hoverRating || rating;

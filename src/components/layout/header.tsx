@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
-import { authClient } from "@/src/lib/auth-client";
+import { onAuthChange, logout } from "@/src/lib/auth";
 import { toast } from "@/src/components/ui/use-toast";
 import {
   DropdownMenu,
@@ -30,6 +30,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
+
+interface CartItem {
+  quantity?: number;
+}
+
+interface WishlistItem {
+  id?: string;
+}
+
+interface FirebaseUser {
+  uid: string;
+  email?: string | null;
+  displayName?: string | null;
+  getIdToken: () => Promise<string>;
+}
 
 interface User {
   id: string;
@@ -53,16 +68,15 @@ export function Header() {
 
   const syncCounts = () => {
     try {
-      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      const cart: CartItem[] = JSON.parse(localStorage.getItem("cart") || "[]");
+      const wishlist: WishlistItem[] = JSON.parse(localStorage.getItem("wishlist") || "[]");
+
       setCartCount(
         Array.isArray(cart)
-          ? cart.reduce(
-              (acc: number, item: any) => acc + (item.quantity || 1),
-              0,
-            )
-          : 0,
+          ? cart.reduce((acc, item) => acc + (item.quantity || 1), 0)
+          : 0
       );
+
       setWishlistCount(Array.isArray(wishlist) ? wishlist.length : 0);
     } catch {
       setCartCount(0);
@@ -70,51 +84,67 @@ export function Header() {
     }
   };
 
-  const checkAuthStatus = async () => {
+  const fetchUserFromDB = async (firebaseUser: FirebaseUser) => {
     try {
-      const response = await authClient.getSession();
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-      if (response?.data?.user) {
-        const userData = response.data.user as any;
-        setIsLoggedIn(true);
+      if (res.ok) {
+        const data: { name?: string; role?: "ADMIN" | "SELLER" | "CUSTOMER" } =
+          await res.json();
+
         setUser({
-          id: userData.id,
-          email: userData.email,
-          name: userData.name,
-          role: userData.role || "CUSTOMER",
+          id: firebaseUser.uid,
+          email: firebaseUser.email ?? undefined,
+          name: firebaseUser.displayName ?? data.name ?? undefined,
+          role: data.role ?? "CUSTOMER",
         });
       } else {
-        setIsLoggedIn(false);
-        setUser(null);
+        setUser({
+          id: firebaseUser.uid,
+          email: firebaseUser.email ?? undefined,
+          name: firebaseUser.displayName ?? undefined,
+          role: "CUSTOMER",
+        });
       }
-    } catch (error) {
-      console.error("Auth check error:", error);
-      setIsLoggedIn(false);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
+    } catch {
+      setUser({
+        id: firebaseUser.uid,
+        email: firebaseUser.email ?? undefined,
+        name: firebaseUser.displayName ?? undefined,
+        role: "CUSTOMER",
+      });
     }
   };
 
   useEffect(() => {
-    checkAuthStatus();
     syncCounts();
 
-    const handleAuthChange = () => {
-      checkAuthStatus();
-    };
+    const unsubscribe = onAuthChange(async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        setIsLoggedIn(true);
+        await fetchUserFromDB(firebaseUser);
+      } else {
+        setIsLoggedIn(false);
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
 
     const handleCartUpdate = () => syncCounts();
     const handleWishlistUpdate = () => syncCounts();
 
-    window.addEventListener("auth-changed", handleAuthChange);
     window.addEventListener("cart-updated", handleCartUpdate);
     window.addEventListener("wishlist-updated", handleWishlistUpdate);
-
     window.addEventListener("storage", syncCounts);
 
     return () => {
-      window.removeEventListener("auth-changed", handleAuthChange);
+      unsubscribe();
       window.removeEventListener("cart-updated", handleCartUpdate);
       window.removeEventListener("wishlist-updated", handleWishlistUpdate);
       window.removeEventListener("storage", syncCounts);
@@ -133,7 +163,7 @@ export function Header() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await authClient.signOut();
+      await logout();
       setIsLoggedIn(false);
       setUser(null);
 
@@ -142,12 +172,9 @@ export function Header() {
         description: "See you again soon!",
       });
 
-      window.dispatchEvent(new Event("auth-changed"));
-
       router.push("/");
       router.refresh();
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch {
       toast({
         title: "Logout failed",
         description: "Something went wrong. Please try again.",
@@ -167,7 +194,8 @@ export function Header() {
         hoverBg: "hover:bg-red-100",
         label: "Admin",
       };
-    } else if (user?.role === "SELLER") {
+    }
+    if (user?.role === "SELLER") {
       return {
         icon: Store,
         color: "text-blue-600",
@@ -191,10 +219,8 @@ export function Header() {
     return null;
   };
 
-  const isActive = (path: string) => {
-    if (path === "/") return pathname === "/";
-    return pathname.startsWith(path);
-  };
+  const isActive = (path: string) =>
+    path === "/" ? pathname === "/" : pathname.startsWith(path);
 
   const roleStyle = getRoleStyle();
   const RoleIcon = roleStyle.icon;
@@ -204,104 +230,58 @@ export function Header() {
     <header className="w-full border-b bg-white dark:bg-gray-900 sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto flex items-center justify-between py-4 px-4 gap-4">
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <Image
-            src="/images/Logo.png"
-            alt="MediStore Logo"
-            width={100}
-            height={100}
-            className="w-auto h-10"
-          />
+          <Image src="/images/Logo.png" alt="Logo" width={100} height={100} className="h-10 w-auto" />
         </Link>
 
-        <form
-          onSubmit={handleSearch}
-          className="hidden md:flex flex-1 max-w-xl border-2 rounded-xl overflow-hidden border-gray-200 dark:border-gray-700 focus-within:border-emerald-600 transition-colors"
-        >
-          <Input
-            name="search"
-            placeholder="Search medicine, medical products..."
-            className="border-0 focus-visible:ring-0 h-11 bg-white dark:bg-gray-800"
-          />
-          <Button
-            type="submit"
-            className="rounded-none bg-emerald-600 hover:bg-emerald-700 px-6 h-11"
-          >
+        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl border-2 rounded-xl overflow-hidden border-gray-200 dark:border-gray-700">
+          <Input name="search" placeholder="Search medicine..." className="border-0 h-11" />
+          <Button type="submit" className="bg-emerald-600 px-6 h-11">
             <Search className="h-5 w-5 text-white" />
           </Button>
         </form>
 
         <div className="flex items-center gap-2">
-          <Link
-            href="/wishlist"
-            className="relative hover:text-emerald-600 transition-colors p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-            aria-label="Wishlist"
-          >
+          <Link href="/wishlist" className="p-2">
             <Heart className="h-5 w-5" />
           </Link>
 
-          <Link
-            href="/cart"
-            className="relative hover:text-emerald-600 transition-colors p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-            aria-label="Shopping Cart"
-          >
+          <Link href="/cart" className="p-2">
             <ShoppingCart className="h-5 w-5" />
           </Link>
 
           {isLoading ? (
-            <div className="p-2">
-              <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-            </div>
+            <Loader2 className="h-5 w-5 animate-spin" />
           ) : isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button
-                  className={`${roleStyle.bgColor} ${roleStyle.hoverBg} transition-colors p-2 rounded-lg flex items-center gap-2`}
-                  aria-label="Profile Menu"
-                >
+                <button className={`p-2 rounded-lg ${roleStyle.bgColor}`}>
                   <RoleIcon className={`h-5 w-5 ${roleStyle.color}`} />
                 </button>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel>
                   <div className="flex items-center gap-3">
-                    <div
-                      className={`w-10 h-10 ${roleStyle.bgColor} rounded-full flex items-center justify-center`}
-                    >
-                      <RoleIcon className={`h-5 w-5 ${roleStyle.color}`} />
-                    </div>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-semibold">
-                        {user?.name || user?.email}
-                      </p>
-                      <p className={`text-xs font-medium ${roleStyle.color}`}>
-                        {roleStyle.label}
-                      </p>
+                    <RoleIcon className={`h-5 w-5 ${roleStyle.color}`} />
+                    <div>
+                      <p className="text-sm font-semibold">{user?.name || user?.email}</p>
+                      <p className={`text-xs ${roleStyle.color}`}>{roleStyle.label}</p>
                     </div>
                   </div>
                 </DropdownMenuLabel>
+
                 <DropdownMenuSeparator />
 
-                {(user?.role === "ADMIN" || user?.role === "SELLER") &&
-                  getDashboardLink() && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={getDashboardLink()!}
-                          className="cursor-pointer"
-                        >
-                          <LayoutDashboard className="h-4 w-4 mr-2" />
-                          Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
+                {getDashboardLink() && (
+                  <DropdownMenuItem asChild>
+                    <Link href={getDashboardLink()!}>
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                )}
 
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                  className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
-                >
+                <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   {isLoggingOut ? "Logging out..." : "Logout"}
                 </DropdownMenuItem>
@@ -309,260 +289,20 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <div className="hidden sm:flex gap-2">
-              <Button
-                asChild
-                className="font-semibold text-sm bg-emerald-600 hover:bg-emerald-700 text-white border-0"
-              >
+              <Button asChild className="bg-emerald-600 text-white">
                 <Link href="/login">Sign In</Link>
               </Button>
-              <Button
-                asChild
-                className="font-semibold text-sm bg-emerald-600 hover:bg-emerald-700 text-white border-0"
-              >
+              <Button asChild className="bg-emerald-600 text-white">
                 <Link href="/register">Sign Up</Link>
               </Button>
             </div>
           )}
 
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label="Toggle menu"
-          >
-            {menuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2">
+            {menuOpen ? <X /> : <Menu />}
           </button>
         </div>
       </div>
-
-      <div className="px-4 pb-3 md:hidden">
-        <form
-          onSubmit={handleSearch}
-          className="flex border-2 rounded-xl overflow-hidden border-gray-200 dark:border-gray-700 focus-within:border-emerald-600"
-        >
-          <Input
-            name="search"
-            placeholder="Search medicine..."
-            className="border-0 focus-visible:ring-0 h-10 bg-white dark:bg-gray-800"
-          />
-          <Button
-            type="submit"
-            className="rounded-none bg-emerald-600 hover:bg-emerald-700 px-5 h-10"
-          >
-            <Search className="h-4 w-4 text-white" />
-          </Button>
-        </form>
-      </div>
-
-      <nav className="border-t border-gray-200 dark:border-gray-800">
-        <div className="container mx-auto px-4">
-          <ul className="hidden md:flex justify-center items-center gap-8 text-sm font-bold py-3">
-            <li>
-              <Link
-                href="/"
-                className={`transition-colors py-2 px-3 rounded-lg ${
-                  isActive("/")
-                    ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20"
-                    : "text-gray-800 dark:text-gray-200 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                }`}
-              >
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/shop"
-                className={`transition-colors py-2 px-3 rounded-lg ${
-                  isActive("/shop")
-                    ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20"
-                    : "text-gray-800 dark:text-gray-200 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                }`}
-              >
-                Shop
-              </Link>
-            </li>
-            {isCustomer && (
-              <li>
-                <Link
-                  href="/track-order"
-                  className={`transition-colors py-2 px-3 rounded-lg ${
-                    isActive("/track-order")
-                      ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20"
-                      : "text-gray-800 dark:text-gray-200 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                  }`}
-                >
-                  Track Order
-                </Link>
-              </li>
-            )}
-            <li>
-              <Link
-                href="/about"
-                className={`transition-colors py-2 px-3 rounded-lg ${
-                  isActive("/about")
-                    ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20"
-                    : "text-gray-800 dark:text-gray-200 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                }`}
-              >
-                About
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/contact"
-                className={`transition-colors py-2 px-3 rounded-lg ${
-                  isActive("/contact")
-                    ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20"
-                    : "text-gray-800 dark:text-gray-200 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                }`}
-              >
-                Contact
-              </Link>
-            </li>
-          </ul>
-
-          {menuOpen && (
-            <ul className="flex flex-col gap-2 py-4 md:hidden text-sm font-bold border-t border-gray-200 dark:border-gray-800">
-              <li>
-                <Link
-                  href="/"
-                  onClick={() => setMenuOpen(false)}
-                  className={`block py-2 px-3 rounded-lg transition-colors ${
-                    isActive("/")
-                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700"
-                      : "text-gray-800 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700"
-                  }`}
-                >
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/shop"
-                  onClick={() => setMenuOpen(false)}
-                  className={`block py-2 px-3 rounded-lg transition-colors ${
-                    isActive("/shop")
-                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700"
-                      : "text-gray-800 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700"
-                  }`}
-                >
-                  Shop
-                </Link>
-              </li>
-              {isCustomer && (
-                <li>
-                  <Link
-                    href="/track-order"
-                    onClick={() => setMenuOpen(false)}
-                    className={`flex items-center gap-2 py-2 px-3 rounded-lg transition-colors ${
-                      isActive("/track-order")
-                        ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700"
-                        : "text-gray-800 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700"
-                    }`}
-                  >
-                    <Package className="h-4 w-4" />
-                    <span>Track Order</span>
-                  </Link>
-                </li>
-              )}
-              <li>
-                <Link
-                  href="/about"
-                  onClick={() => setMenuOpen(false)}
-                  className={`block py-2 px-3 rounded-lg transition-colors ${
-                    isActive("/about")
-                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700"
-                      : "text-gray-800 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700"
-                  }`}
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  onClick={() => setMenuOpen(false)}
-                  className={`block py-2 px-3 rounded-lg transition-colors ${
-                    isActive("/contact")
-                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700"
-                      : "text-gray-800 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700"
-                  }`}
-                >
-                  Contact
-                </Link>
-              </li>
-
-              {!isLoading && !isLoggedIn && (
-                <div className="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-800 mt-2">
-                  <Button
-                    asChild
-                    className="w-full justify-start bg-emerald-600 hover:bg-emerald-700 text-white border-0"
-                  >
-                    <Link href="/login" onClick={() => setMenuOpen(false)}>
-                      Sign In
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    className="w-full justify-start bg-emerald-600 hover:bg-emerald-700 text-white border-0"
-                  >
-                    <Link href="/register" onClick={() => setMenuOpen(false)}>
-                      Sign Up
-                    </Link>
-                  </Button>
-                </div>
-              )}
-
-              {!isLoading && isLoggedIn && (
-                <div className="pt-2 border-t border-gray-200 dark:border-gray-800 mt-2 space-y-2">
-                  <div
-                    className={`flex items-center gap-3 py-3 px-3 rounded-lg ${roleStyle.bgColor}`}
-                  >
-                    <div className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">
-                      <RoleIcon className={`h-5 w-5 ${roleStyle.color}`} />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        {roleStyle.label}
-                      </p>
-                      <p className="font-semibold text-sm">
-                        {user?.name || user?.email}
-                      </p>
-                    </div>
-                  </div>
-
-                  {(user?.role === "ADMIN" || user?.role === "SELLER") &&
-                    getDashboardLink() && (
-                      <Link
-                        href={getDashboardLink()!}
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 transition-colors"
-                      >
-                        <LayoutDashboard className="h-5 w-5" />
-                        <span>Dashboard</span>
-                      </Link>
-                    )}
-
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      handleLogout();
-                    }}
-                    disabled={isLoggingOut}
-                    className="w-full flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 transition-colors"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
-                  </button>
-                </div>
-              )}
-            </ul>
-          )}
-        </div>
-      </nav>
     </header>
   );
 }

@@ -1,5 +1,5 @@
-import { cookies } from "next/headers";
 import { env } from "./../env";
+import { getAuthToken } from "@/src/lib/auth";
 
 const API_URL = env.API_URL;
 
@@ -32,85 +32,38 @@ export interface CreateCategoryPayload {
   imageUrl?: string;
 }
 
-async function getCookieHeader() {
-  const cookieStore = await cookies();
-  const allCookies = cookieStore.getAll();
-  
-  console.log('🔍 Total cookies found:', allCookies.length);
-  console.log('🔍 All cookie names:', allCookies.map(c => c.name));
-  
-  if (allCookies.length === 0) {
-    console.error('❌ No cookies found at all');
-    return '';
-  }
-  
-  const sessionCookie = allCookies.find(
-    c => c.name === 'better-auth.session_token' || 
-         c.name === 'better_auth.session_token' ||
-         c.name.includes('session') ||
-         c.name.includes('auth')
-  );
-  
-  if (!sessionCookie) {
-    console.error('❌ No session cookie found');
-    console.log('Available cookies:', allCookies.map(c => c.name));
-    return '';
-  }
-  
-  console.log('✅ Found session cookie:', sessionCookie.name);
-  console.log('✅ Cookie value (first 20 chars):', sessionCookie.value.substring(0, 20));
-  
-  const cookieString = allCookies
-    .map(cookie => `${cookie.name}=${cookie.value}`)
-    .join('; ');
-  
-  console.log('✅ Sending cookie header length:', cookieString.length);
-  
-  return cookieString;
+type ApiError = {
+  message?: string;
+};
+
+async function authHeader(): Promise<HeadersInit> {
+  const token = await getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  try {
-    const cookieHeader = await getCookieHeader();
-    
-    console.log('🌐 Fetching URL:', url);
-    console.log('🍪 Cookie header:', cookieHeader ? 'Present' : 'Missing');
-    
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cookie': cookieHeader,
-        ...options.headers,
-      },
-      credentials: 'include',
-    });
-
-    console.log('📡 Response status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Error response:', errorText);
-    }
-
-    return response;
-  } catch (error) {
-    console.error('💥 Fetch error:', error);
-    throw error;
-  }
+  const headers = await authHeader();
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+      ...(options.headers as Record<string, string> | undefined),
+    },
+  });
+  return response;
 }
 
 export const adminService = {
   getAllUsers: async () => {
     try {
-      console.log('📞 Calling getAllUsers');
       const res = await fetchWithAuth(`${API_URL}/user`, {
         method: "GET",
         cache: "no-store",
       });
 
       if (!res.ok) {
-        const error = await res.json();
+        const error = (await res.json()) as ApiError;
         return {
           data: null,
           error: { message: error.message || "Failed to get users" },
@@ -122,8 +75,7 @@ export const adminService = {
         data: response.data as User[],
         error: null,
       };
-    } catch (error) {
-      console.error("Get all users error:", error);
+    } catch (error: unknown) {
       return {
         data: null,
         error: { message: "Failed to get all users" },
@@ -139,7 +91,7 @@ export const adminService = {
       });
 
       if (!res.ok) {
-        const error = await res.json();
+        const error = (await res.json()) as ApiError;
         return {
           data: null,
           error: { message: error.message || "Failed to update user status" },
@@ -151,8 +103,7 @@ export const adminService = {
         data: response.data as User,
         error: null,
       };
-    } catch (error) {
-      console.error("Update user status error:", error);
+    } catch (error: unknown) {
       return {
         data: null,
         error: { message: "Failed to update user status" },
@@ -173,14 +124,8 @@ export const adminService = {
       }
 
       const config: RequestInit = {};
-      if (options?.cache) {
-        config.cache = options.cache;
-      }
-
-      if (options?.revalidate) {
-        config.next = { revalidate: options.revalidate };
-      }
-
+      if (options?.cache) config.cache = options.cache;
+      if (options?.revalidate) config.next = { revalidate: options.revalidate };
       config.next = { ...config.next, tags: ["medicines"] };
 
       const res = await fetch(url.toString(), config);
@@ -190,8 +135,7 @@ export const adminService = {
         data: medicines,
         error: null,
       };
-    } catch (error) {
-      console.log(error);
+    } catch (error: unknown) {
       return {
         data: null,
         error: { message: "Failed to fetch featured products" },
@@ -201,14 +145,13 @@ export const adminService = {
 
   getAllOrders: async () => {
     try {
-      console.log('📞 Calling getAllOrders');
       const res = await fetchWithAuth(`${API_URL}/order/all`, {
         method: "GET",
         cache: "no-store",
       });
 
       if (!res.ok) {
-        const error = await res.json();
+        const error = (await res.json()) as ApiError;
         return {
           data: null,
           error: { message: error.message || "Failed to fetch all orders" },
@@ -220,8 +163,7 @@ export const adminService = {
         data: response.data,
         error: null,
       };
-    } catch (error) {
-      console.log(error);
+    } catch (error: unknown) {
       return {
         data: null,
         error: { message: "Failed to fetch all orders" },
@@ -247,8 +189,7 @@ export const adminService = {
         data: response.data,
         error: null,
       };
-    } catch (error) {
-      console.log(error);
+    } catch (error: unknown) {
       return {
         data: null,
         error: { message: "Failed to fetch categories" },
@@ -274,8 +215,7 @@ export const adminService = {
         data: response.data,
         error: null,
       };
-    } catch (error) {
-      console.log(error);
+    } catch (error: unknown) {
       return {
         data: null,
         error: { message: "Failed to fetch category" },
@@ -287,7 +227,6 @@ export const adminService = {
     try {
       const res = await fetchWithAuth(`${API_URL}/category/${id}`, {
         method: "DELETE",
-        cache: "no-store",
       });
 
       if (!res.ok) {
@@ -302,8 +241,7 @@ export const adminService = {
         data: response.data,
         error: null,
       };
-    } catch (error) {
-      console.log(error);
+    } catch (error: unknown) {
       return {
         data: null,
         error: { message: "Failed to delete category" },
@@ -319,7 +257,7 @@ export const adminService = {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
+        const errorData = (await res.json()) as ApiError;
         return {
           data: null,
           error: { message: errorData.message || "Failed to create category" },
@@ -331,11 +269,11 @@ export const adminService = {
         data: response.data,
         error: null,
       };
-    } catch (error: any) {
-      console.error("Catch error:", error);
+    } catch (error: unknown) {
+      const err = error as ApiError;
       return {
         data: null,
-        error: { message: error.message || "Failed to create category" },
+        error: { message: err.message || "Failed to create category" },
       };
     }
   },
@@ -359,8 +297,7 @@ export const adminService = {
         data: response.data,
         error: null,
       };
-    } catch (error) {
-      console.log(error);
+    } catch (error: unknown) {
       return {
         data: null,
         error: { message: "Failed to update category" },

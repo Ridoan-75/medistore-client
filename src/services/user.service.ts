@@ -1,38 +1,31 @@
-import { cookies } from "next/headers";
 import { env } from "./../env";
+import { getAuthToken } from "@/src/lib/auth";
 
-const AUTH_URL = env.AUTH_URL;
+const API_URL = env.API_URL;
 
 export const userService = {
-  getSession: async () => {
+  // Get current user info from DB (role, status, etc.)
+  getMe: async () => {
     try {
-      const cookieStore = await cookies();
-      const res = await fetch(`${AUTH_URL}/get-session`, {
-        headers: {
-          cookie: cookieStore.toString(),
-        },
+      const token = await getAuthToken();
+      if (!token) {
+        return { data: null, error: { message: "Not authenticated" } };
+      }
+
+      const res = await fetch(`${API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });
 
-      const session = await res.json();
-
-      if (session === null) {
-        return {
-          data: null,
-          error: { message: "No active session" },
-        };
+      if (!res.ok) {
+        return { data: null, error: { message: "Failed to fetch user" } };
       }
 
-      return {
-        data: session,
-        error: null,
-      };
+      const data = await res.json();
+      return { data, error: null };
     } catch (error) {
-      console.log(error);
-      return {
-        data: null,
-        error: { message: "Failed to fetch session" },
-      };
+      console.error(error);
+      return { data: null, error: { message: "Failed to fetch user" } };
     }
   },
 };

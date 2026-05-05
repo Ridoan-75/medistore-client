@@ -1,5 +1,6 @@
-import { cookies } from "next/headers";
 import { env } from "./../env";
+import { getAuthToken } from "@/src/lib/auth";
+
 const API_URL = env.API_URL;
 
 export interface OrderMedicine {
@@ -92,23 +93,22 @@ export interface OrderStatus {
   CANCELLED: string;
 }
 
+// Helper: build auth header from Firebase token
+async function authHeader(): Promise<HeadersInit> {
+  const token = await getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export const sellerProductService = {
   getSellerProducts: async () => {
     try {
-      const cookieStore = await cookies();
-
-      console.log("API URL:", `${API_URL}/medicine/seller`);
-
       const res = await fetch(`${API_URL}/medicine/seller`, {
-        headers: {
-          cookie: cookieStore.toString(),
-        },
+        headers: { ...(await authHeader()) },
         cache: "no-store",
       });
 
       if (!res.ok) {
         const error = await res.json();
-        console.log("Error response:", error);
         return {
           data: null,
           error: { message: error.message || "Failed to fetch products" },
@@ -116,7 +116,6 @@ export const sellerProductService = {
       }
 
       const response = await res.json();
-      console.log("Success response:", response);
       return {
         data: response.data as SellerProduct[],
         error: null,
@@ -132,12 +131,11 @@ export const sellerProductService = {
 
   createProduct: async (payload: CreateProductPayload) => {
     try {
-      const cookieStore = await cookies();
       const res = await fetch(`${API_URL}/medicine`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          cookie: cookieStore.toString(),
+          ...(await authHeader()),
         },
         body: JSON.stringify(payload),
       });
@@ -166,12 +164,11 @@ export const sellerProductService = {
 
   updateProduct: async (id: string, payload: Partial<CreateProductPayload>) => {
     try {
-      const cookieStore = await cookies();
       const res = await fetch(`${API_URL}/medicine/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          cookie: cookieStore.toString(),
+          ...(await authHeader()),
         },
         body: JSON.stringify(payload),
       });
@@ -200,12 +197,9 @@ export const sellerProductService = {
 
   deleteProduct: async (id: string) => {
     try {
-      const cookieStore = await cookies();
       const res = await fetch(`${API_URL}/medicine/${id}`, {
         method: "DELETE",
-        headers: {
-          cookie: cookieStore.toString(),
-        },
+        headers: { ...(await authHeader()) },
       });
 
       if (!res.ok) {
@@ -231,11 +225,8 @@ export const sellerProductService = {
 
   getProductById: async (id: string) => {
     try {
-      const cookieStore = await cookies();
       const res = await fetch(`${API_URL}/medicine/${id}`, {
-        headers: {
-          cookie: cookieStore.toString(),
-        },
+        headers: { ...(await authHeader()) },
         cache: "no-store",
       });
 
@@ -263,15 +254,10 @@ export const sellerProductService = {
 
   getSellerOrders: async () => {
     try {
-      const cookieStore = await cookies();
       const res = await fetch(`${API_URL}/order/seller`, {
-        headers: {
-          cookie: cookieStore.toString(),
-        },
+        headers: { ...(await authHeader()) },
         cache: "no-store",
       });
-
-      console.log(res);
 
       if (!res.ok) {
         const error = await res.json();
@@ -297,12 +283,11 @@ export const sellerProductService = {
 
   updateOrderStatus: async (orderId: string, status: string) => {
     try {
-      const cookieStore = await cookies();
       const res = await fetch(`${API_URL}/order/${orderId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          cookie: cookieStore.toString(),
+          ...(await authHeader()),
         },
         body: JSON.stringify({ status }),
       });

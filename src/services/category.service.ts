@@ -1,5 +1,5 @@
-import { cookies } from "next/headers";
 import { env } from "./../env";
+import { getAuthToken } from "@/src/lib/auth";
 
 const API_URL = env.API_URL;
 
@@ -12,27 +12,15 @@ export interface Category {
   updatedAt: string;
 }
 
-// ⭐ Helper function to get cookies
-async function getCookieHeader() {
-  const cookieStore = await cookies();
-  const allCookies = cookieStore.getAll();
-  
-  return allCookies
-    .map(cookie => `${cookie.name}=${cookie.value}`)
-    .join('; ');
-}
-
 export const categoryService = {
   getAllCategories: async () => {
     try {
-      const cookieHeader = await getCookieHeader();
-      
+      const token = await getAuthToken();
       const res = await fetch(`${API_URL}/category`, {
         headers: {
-          'Cookie': cookieHeader,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        credentials: 'include', // ⭐ Important
         cache: "no-store",
       });
 
